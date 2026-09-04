@@ -88,7 +88,7 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 15px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -104,6 +104,11 @@
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        .btn-super {
+            background: var(--gold);
+            color: #000;
         }
 
         .data-table { width: 100%; border-collapse: collapse; background: var(--panel-bg); border-radius: 6px; }
@@ -132,7 +137,7 @@
         
         .versus-box {
             background: #0d1017;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             border-left: 3px solid var(--cyan);
             margin-top: 5px;
@@ -140,9 +145,9 @@
 
         .match-score-row {
             background: #0d1017;
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
             border: 1px solid var(--border);
         }
         .score-inputs {
@@ -152,8 +157,20 @@
             margin-top: 5px;
         }
         .score-inputs input {
-            width: 60px;
+            width: 65px;
             text-align: center;
+            font-weight: bold;
+        }
+        .edit-select-box {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+        .edit-select-box select {
+            font-size: 0.85rem;
+            padding: 5px;
         }
     </style>
 </head>
@@ -192,7 +209,7 @@
 
         <!-- Fixtures -->
         <div id="fixtures" class="tab-content">
-            <h2>ম্যাচ সূচী ও স্কোয়াড সাবমিশন</h2>
+            <h2>ম্যাচ সূচী, ফলাফল ও স্কোয়াড</h2>
             <div id="fixtures-list">ডাটা লোড হচ্ছে...</div>
         </div>
 
@@ -213,6 +230,7 @@
                         <th>জয়</th>
                         <th>ড্র</th>
                         <th>হার</th>
+                        <th>ডিফারেন্স (+/-)</th>
                         <th>পয়েন্ট</th>
                     </tr>
                 </thead>
@@ -225,8 +243,11 @@
             <h2>নিয়মাবলী</h2>
             <div style="background: var(--panel-bg); padding: 15px; border-radius: 6px;">
                 <p>১. ক্যাপ্টেন লগইন করে ৫ জনের স্কোয়াড জমা দেবেন (ক্যাপ্টেন নিজেও খেলতে পারবেন)।</p>
-                <p>২. দুই দল স্কোয়াড জমা দিলে অ্যাডমিন তারিখ দিলে অটো ৫টি ১v১ ভার্সেস ম্যাচ জেনারেট হবে।</p>
-                <p>৩. ম্যাচ শেষে ক্যাপ্টেন ৫টি ম্যাচের পৃথক রেজাল্ট সাবমিট করবেন। ড্র হলে সুপার ম্যাচের রান যোগ হবে।</p>
+                <p>২. দুই দল স্কোয়াড জমা দিলে অটো ৫টি ১v১ ভার্সেস ম্যাচ জেনারেট হবে।</p>
+                <p>৩. ম্যাচ চলাকালে সাব (Sub) বা সোয়াপ (Swap) হলে রেজাল্ট সাবমিট করার সময় প্লেয়ার এডিট করা যাবে।</p>
+                <p>৪. রেজাল্ট এপ্রুভ হলে মূল ৫ ম্যাচে যদি সমতা (Draw) তৈরি হয়, তবে অ্যাডমিন এপ্রুভালের পর <strong>সুপার ম্যাচ (Super Match)</strong> অনুষ্ঠিত হবে।</p>
+                <p>৫. সুপার ম্যাচের জন্য ক্যাপ্টেনরা ১ জন করে সেরা প্লেয়ার বেছে নেবেন। অ্যাডমিন এপ্রুভ করার পর সেই ১v১ সুপার ম্যাচের মাধ্যমে চূড়ান্ত বিজয়ী নির্ধারিত হবে।</p>
+                <p>৬. পয়েন্ট টেবিলে সমতা হলে <strong>গোল/ম্যাচ ডিফারেন্স (+/-)</strong> এবং অন্যান্য টাই-ব্রেকার রুলস অনুযায়ী র্যাঙ্কিং নির্ধারণ করা হবে।</p>
             </div>
         </div>
     </div>
@@ -252,6 +273,7 @@
         </div>
     </div>
 
+    <!-- ৫ জন প্লেয়ারের স্কোয়াড মোডাল -->
     <div id="squadModal" class="modal">
         <div class="modal-content">
             <h3>৫ জন প্লেয়ারের স্কোয়াড সাবমিট করুন</h3>
@@ -267,30 +289,27 @@
         </div>
     </div>
 
-    <!-- সেপারেট ৫টি ম্যাচ রেজাল্ট ও সুপার ম্যাচ মোডাল -->
+    <!-- সুপার ম্যাচ প্লেয়ার সিলেকশন মোডাল -->
+    <div id="superSquadModal" class="modal">
+        <div class="modal-content">
+            <h3>সুপার ম্যাচের জন্য ১ জন প্লেয়ার সিলেক্ট করুন</h3>
+            <p style="color:var(--cyan); font-size:0.85rem;">ম্যাচ ড্র হওয়ায় ১v১ টাই-ব্রেকার খেলার জন্য সেরা প্লেয়ার বেছে নিন।</p>
+            <div class="form-group">
+                <label>সুপার প্লেয়ার:</label>
+                <select id="super-player-select"></select>
+            </div>
+            <button class="btn-action btn-super" onclick="submitSuperSquad()">সুপার প্লেয়ার সাবমিট করুন</button>
+            <button class="btn-action" style="background:var(--danger)" onclick="closeModals()">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <!-- মূল ৫টি ম্যাচ রেজাল্ট সাবমিট মোডাল -->
     <div id="resultModal" class="modal">
         <div class="modal-content">
-            <h3>৫টি ১v১ ম্যাচ রেজাল্ট সাবমিশন</h3>
-            <p style="font-size:0.85rem; color:var(--cyan); margin-top:-5px;">প্রতিটি ম্যাচের গোল/স্কোর দিন। ড্র হলে সুপার ম্যাচ বক্স টিক দিন।</p>
+            <h3>৫টি ১v১ ম্যাচের গোল ও সাব/সোয়াপ ইনপুট</h3>
+            <p style="font-size:0.85rem; color:var(--cyan); margin-top:-5px;">প্লেয়ার চেঞ্জ (Sub/Swap) হলে নাম বদলে প্রতিটি ম্যাচের গোল ইনপুট দিন।</p>
             
             <div id="modal-5-matches-container"></div>
-
-            <div class="form-group" style="background:#0d1017; padding:10px; border-radius:6px; margin-top:10px;">
-                <label style="color:var(--gold); display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" id="super-match-checkbox" onchange="toggleSuperMatchInput()"> 
-                    ম্যাচ ড্র হয়েছে? (সুপার ম্যাচ রেজাল্ট যোগ করুন)
-                </label>
-                <div id="super-match-box" style="display:none; margin-top:10px;">
-                    <strong style="color:var(--cyan)">Super Match Score:</strong>
-                    <div class="score-inputs">
-                        <span id="super-team-a-label" style="font-size:0.85rem;">Team A</span>
-                        <input type="number" id="super-score-a" value="0">
-                        <span>VS</span>
-                        <input type="number" id="super-score-b" value="0">
-                        <span id="super-team-b-label" style="font-size:0.85rem;">Team B</span>
-                    </div>
-                </div>
-            </div>
 
             <div class="form-group">
                 <label>রেজাল্ট স্ক্রিনশট লিংক (Image URL)</label>
@@ -302,6 +321,23 @@
         </div>
     </div>
 
+    <!-- সুপার ম্যাচ স্কোর সাবমিট মোডাল -->
+    <div id="superResultModal" class="modal">
+        <div class="modal-content">
+            <h3>সুপার ম্যাচ (১v১) ফলাফল ইনপুট</h3>
+            <div class="match-score-row" id="super-match-input-box">
+                <!-- Dynamic Content -->
+            </div>
+            <div class="form-group">
+                <label>সুপার ম্যাচ স্ক্রিনশট লিংক (Image URL)</label>
+                <input type="text" id="super-screenshot-url-input" placeholder="https://imgur.com/example.png">
+            </div>
+            <button class="btn-action btn-super" onclick="submitSuperMatchResult()">সুপার রেজাল্ট সাবমিট</button>
+            <button class="btn-action" style="background:var(--danger)" onclick="closeModals()">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <!-- অ্যাডমিন প্যানেল -->
     <div id="adminModal" class="modal">
         <div class="modal-content">
             <h3>অ্যাডমিন কন্ট্রোল প্যানেল</h3>
@@ -313,12 +349,20 @@
                 <button class="btn-action" onclick="verifyAdmin()">লগইন</button>
             </div>
             <div id="admin-controls" style="display:none;">
-                <h4>পেন্ডিং স্কোয়াড ও ম্যাচ ডেট ফিক্স</h4>
+                <h4>১. পেন্ডিং স্কোয়াড ও ম্যাচ ডেট ফিক্স</h4>
                 <div id="pending-squads-list">কোনো স্কোয়াড পেন্ডিং নেই।</div>
                 <hr style="border-color:var(--border);">
 
-                <h4>পেন্ডিং রেজাল্ট এপ্রুভাল</h4>
+                <h4>২. পেন্ডিং মূল রেজাল্ট এপ্রুভাল</h4>
                 <div id="pending-results-list">কোনো রেজাল্ট পেন্ডিং নেই।</div>
+                <hr style="border-color:var(--border);">
+
+                <h4>৩. পেন্ডিং সুপার ম্যাচ প্লেয়ার এপ্রুভাল</h4>
+                <div id="pending-super-squads-list">কোনো সুপার প্লেয়ার পেন্ডিং নেই।</div>
+                <hr style="border-color:var(--border);">
+
+                <h4>৪. পেন্ডিং সুপার ম্যাচ রেজাল্ট এপ্রুভাল</h4>
+                <div id="pending-super-results-list">কোনো সুপার রেজাল্ট পেন্ডিং নেই।</div>
                 <hr style="border-color:var(--border);">
 
                 <div class="form-group">
@@ -424,7 +468,7 @@
         }
 
         async function fetchFixtures() {
-            const { data: fixtures } = await db.from('fixtures').select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name)');
+            const { data: fixtures } = await db.from('fixtures').select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name), match_results(*)');
             const container = document.getElementById('fixtures-list');
             const resultContainer = document.getElementById('result-submit-list');
 
@@ -435,17 +479,57 @@
             }
 
             container.innerHTML = fixtures.map(f => {
+                let res = (f.match_results && f.match_results.length > 0) ? f.match_results[f.match_results.length - 1] : null;
+                let headerTitle = `${f.team_a?.team_name} VS ${f.team_b?.team_name}`;
+                
+                if (res) {
+                    headerTitle = `
+                        ${f.team_a?.team_name} 
+                        <span style="color:var(--gold); font-size:1.2rem; font-weight:bold;">(${res.score_a})</span> 
+                        <span style="color:var(--cyan);">VS</span> 
+                        <span style="color:var(--gold); font-size:1.2rem; font-weight:bold;">(${res.score_b})</span> 
+                        ${f.team_b?.team_name}
+                    `;
+                }
+
                 let versusHtml = '';
                 if (f.squad_matches) {
                     let matches = f.squad_matches.split('|');
                     versusHtml = `
                         <div class="versus-box">
-                            <strong style="color:var(--cyan)">৫টি র্যান্ডম ১v১ প্লেয়ার ফিক্সচার:</strong>
-                            <div style="margin-top:5px; font-size:0.88rem;">
-                                ${matches.map((m, i) => `<div><strong>ম্যাচ ${i+1}:</strong> ${m}</div>`).join('')}
+                            <strong style="color:var(--cyan)">১v১ ম্যাচের প্লেয়ার ও রেজাল্ট বিস্তারিত:</strong>
+                            <div style="margin-top:8px; font-size:0.88rem; line-height: 1.6;">
+                                ${matches.map((m, i) => `<div style="border-bottom:1px dashed #272d3d; padding:3px 0;"><strong>${m.includes('[SUPER MATCH]') ? 'সুপার ম্যাচ' : 'ম্যাচ ' + (i+1)}:</strong> ${m.trim()}</div>`).join('')}
                             </div>
                         </div>
                     `;
+                }
+
+                let actionBtn = `<button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>`;
+                
+                if (f.status === 'Super Match Needed') {
+                    actionBtn = `<button class="btn-action btn-super" onclick="openSuperSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Super Player Select</button>`;
+                }
+
+                return `
+                    <div class="fixture-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div>
+                                <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
+                                <div style="font-weight:bold; margin-top:5px; font-size:1.1rem;">${headerTitle}</div>
+                                <small>স্ট্যাটাস: <strong style="color:${f.status.includes('Super') ? 'var(--gold)' : 'var(--cyan)'}">${f.status}</strong></small>
+                            </div>
+                            ${actionBtn}
+                        </div>
+                        ${versusHtml}
+                    </div>
+                `;
+            }).join('');
+
+            resultContainer.innerHTML = fixtures.map(f => {
+                let submitBtn = `<button class="btn-action" onclick="openResultModal(${f.id})">Submit Score</button>`;
+                if (f.status === 'Super Match Scheduled') {
+                    submitBtn = `<button class="btn-action btn-super" onclick="openSuperResultModal(${f.id})">Submit Super Score</button>`;
                 }
 
                 return `
@@ -453,30 +537,17 @@
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
-                                <div style="font-weight:bold; margin-top:5px; font-size:1.1rem;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
+                                <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
                                 <small>স্ট্যাটাস: ${f.status}</small>
                             </div>
-                            <button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>
+                            ${submitBtn}
                         </div>
-                        ${versusHtml}
                     </div>
                 `;
             }).join('');
-
-            resultContainer.innerHTML = fixtures.map(f => `
-                <div class="fixture-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
-                            <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
-                            <small>স্ট্যাটাস: ${f.status}</small>
-                        </div>
-                        <button class="btn-action" onclick="openResultModal(${f.id})">Submit Score</button>
-                    </div>
-                </div>
-            `).join('');
         }
 
+        // সাধারণ ৫ জনের স্কোয়াড মোডাল
         async function openSquadModal(fixtureId, teamAId, teamBId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
             if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
@@ -527,78 +598,133 @@
             alert("স্কোয়াড সাবমিট করা হয়েছে! এডমিন তারিখ ও ১v১ ভার্সেস এপ্রুভ করবেন।");
         }
 
-        // সেপারেট ৫টি ম্যাচের ইনপুট লোড ফাংশন
+        // সুপার প্লেয়ার সিলেকশন মোডাল
+        async function openSuperSquadModal(fixtureId, teamAId, teamBId) {
+            if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
+            if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
+                alert("আপনি এই ম্যাচের অংশ নন!"); return;
+            }
+
+            activeFixtureId = fixtureId;
+            const { data: players } = await db.from('players').select('*').eq('team_id', loggedInCaptain.id);
+
+            let allPlayerList = [loggedInCaptain.captain_name];
+            if (players) {
+                players.forEach(p => {
+                    if (p.player_name.trim().toLowerCase() !== loggedInCaptain.captain_name.trim().toLowerCase()) {
+                        allPlayerList.push(p.player_name);
+                    }
+                });
+            }
+
+            const select = document.getElementById('super-player-select');
+            select.innerHTML = allPlayerList.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            document.getElementById('superSquadModal').style.display = 'flex';
+        }
+
+        async function submitSuperSquad() {
+            const player = document.getElementById('super-player-select').value;
+
+            await db.from('squad_submissions').insert([{
+                fixture_id: activeFixtureId,
+                team_id: loggedInCaptain.id,
+                player_list: `[SUPER] ${player}`,
+                status: 'Super_Pending'
+            }]);
+
+            closeModals();
+            alert("সুপার প্লেয়ার সাবমিট করা হয়েছে! অপর দল সাবমিট করলে অ্যাডমিন ১v১ সুপার ম্যাচ ফিক্স করবেন।");
+        }
+
+        // মূল ৫টি ম্যাচ রেজাল্ট
         async function openResultModal(fixtureId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
 
             const { data: fixture } = await db.from('fixtures')
-                .select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name)')
+                .select('*, team_a:teams!team_a_id(team_name, captain_name), team_b:teams!team_b_id(team_name, captain_name)')
                 .eq('id', fixtureId).single();
 
             if (!fixture || !fixture.squad_matches) {
-                alert("এই ম্যাচের দুই দলের স্কোয়াড এখনো এপ্রুভ হয়নি! স্কোয়াড এপ্রুভ হওয়ার পর এখানে ৫টি ম্যাচ ভেসে উঠবে।");
+                alert("এই ম্যাচের দুই দলের স্কোয়াড এখনো এপ্রুভ হয়নি!");
                 return;
             }
 
             activeFixtureId = fixtureId;
             currentFixtureData = fixture;
 
+            const { data: playersA } = await db.from('players').select('player_name').eq('team_id', fixture.team_a_id);
+            const { data: playersB } = await db.from('players').select('player_name').eq('team_id', fixture.team_b_id);
+
+            let listA = [fixture.team_a.captain_name];
+            if (playersA) playersA.forEach(p => { if (p.player_name.trim().toLowerCase() !== fixture.team_a.captain_name.trim().toLowerCase()) listA.push(p.player_name); });
+
+            let listB = [fixture.team_b.captain_name];
+            if (playersB) playersB.forEach(p => { if (p.player_name.trim().toLowerCase() !== fixture.team_b.captain_name.trim().toLowerCase()) listB.push(p.player_name); });
+
             const matches = fixture.squad_matches.split('|');
             const container = document.getElementById('modal-5-matches-container');
 
-            document.getElementById('super-team-a-label').innerText = fixture.team_a.team_name;
-            document.getElementById('super-team-b-label').innerText = fixture.team_b.team_name;
+            container.innerHTML = matches.map((m, idx) => {
+                let currentP_A = listA.find(p => m.includes(p)) || listA[0];
+                let currentP_B = listB.find(p => m.includes(p)) || listB[0];
 
-            container.innerHTML = matches.map((m, idx) => `
-                <div class="match-score-row">
-                    <strong style="color:var(--gold); font-size:0.85rem;">ম্যাচ ${idx+1}: ${m}</strong>
-                    <div class="score-inputs">
-                        <span style="font-size:0.8rem; width:100px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_a.team_name}</span>
-                        <input type="number" class="match-score-a" data-index="${idx}" value="0">
-                        <span>-</span>
-                        <input type="number" class="match-score-b" data-index="${idx}" value="0">
-                        <span style="font-size:0.8rem; width:100px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_b.team_name}</span>
+                let optionsA = listA.map(p => `<option value="${p}" ${p === currentP_A ? 'selected' : ''}>${p}</option>`).join('');
+                let optionsB = listB.map(p => `<option value="${p}" ${p === currentP_B ? 'selected' : ''}>${p}</option>`).join('');
+
+                let scores = m.match(/\((\d+)\)/g);
+                let scoreA_val = (scores && scores[0]) ? scores[0].replace(/[()]/g, '') : '0';
+                let scoreB_val = (scores && scores[1]) ? scores[1].replace(/[()]/g, '') : '0';
+
+                return `
+                    <div class="match-score-row">
+                        <strong style="color:var(--gold); font-size:0.85rem;">ম্যাচ ${idx+1} (Sub/Swap Editable):</strong>
+                        <div class="edit-select-box">
+                            <select class="edit-player-a">${optionsA}</select>
+                            <span style="color:var(--cyan); font-weight:bold;">VS</span>
+                            <select class="edit-player-b">${optionsB}</select>
+                        </div>
+                        <div class="score-inputs">
+                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_a.team_name} Goal</span>
+                            <input type="number" class="match-score-a" value="${scoreA_val}">
+                            <span>-</span>
+                            <input type="number" class="match-score-b" value="${scoreB_val}">
+                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_b.team_name} Goal</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
-            document.getElementById('super-match-checkbox').checked = false;
-            document.getElementById('super-match-box').style.display = 'none';
             document.getElementById('resultModal').style.display = 'flex';
-        }
-
-        function toggleSuperMatchInput() {
-            const isChecked = document.getElementById('super-match-checkbox').checked;
-            document.getElementById('super-match-box').style.display = isChecked ? 'block' : 'none';
         }
 
         async function submitMatchResult() {
             const inputsA = document.querySelectorAll('.match-score-a');
             const inputsB = document.querySelectorAll('.match-score-b');
+            const selectsA = document.querySelectorAll('.edit-player-a');
+            const selectsB = document.querySelectorAll('.edit-player-b');
             const url = document.getElementById('screenshot-url-input').value;
 
             if (!url) { alert("প্রমাণ হিসেবে স্ক্রিনশট লিংক দেওয়া বাধ্যতামূলক!"); return; }
 
             let winsA = 0;
             let winsB = 0;
+            let updatedMatches = [];
 
-            // ৫টি ম্যাচের ফলাফল গণনা (কে কয়টা জিতল)
             inputsA.forEach((inA, idx) => {
+                let pA = selectsA[idx].value;
+                let pB = selectsB[idx].value;
                 let scoreA = parseInt(inA.value) || 0;
                 let scoreB = parseInt(inputsB[idx].value) || 0;
 
                 if (scoreA > scoreB) winsA++;
                 else if (scoreB > scoreA) winsB++;
+
+                updatedMatches.push(`${pA} (${scoreA}) - (${scoreB}) ${pB}`);
             });
 
-            // যদি ড্র হয় এবং সুপার ম্যাচ টিক দেওয়া থাকে
-            if (document.getElementById('super-match-checkbox').checked) {
-                let superA = parseInt(document.getElementById('super-score-a').value) || 0;
-                let superB = parseInt(document.getElementById('super-score-b').value) || 0;
-
-                if (superA > superB) winsA++;
-                else if (superB > superA) winsB++;
-            }
+            let newSquadMatches = updatedMatches.join(' | ');
+            await db.from('fixtures').update({ squad_matches: newSquadMatches }).eq('id', activeFixtureId);
 
             await db.from('match_results').insert([{
                 fixture_id: activeFixtureId,
@@ -609,22 +735,82 @@
             }]);
 
             closeModals();
-            alert(`রেজাল্ট সাবমিট হয়েছে! অটো গণনাকৃত স্কোর: ${currentFixtureData.team_a.team_name} (${winsA}) VS (${winsB}) ${currentFixtureData.team_b.team_name}। এডমিন এপ্রুভ করলে পয়েন্ট টেবিলে যুক্ত হবে।`);
+            fetchFixtures();
+            alert(`রেজাল্ট সফলভাবে জমা হয়েছে! জেনারেটেড মোট জয়: ${currentFixtureData.team_a.team_name} (${winsA}) VS (${winsB}) ${currentFixtureData.team_b.team_name}`);
         }
 
+        // সুপার ম্যাচ রেজাল্ট সাবমিট
+        async function openSuperResultModal(fixtureId) {
+            if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
+
+            const { data: fixture } = await db.from('fixtures')
+                .select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name)')
+                .eq('id', fixtureId).single();
+
+            activeFixtureId = fixtureId;
+            currentFixtureData = fixture;
+
+            let matches = fixture.squad_matches.split('|');
+            let superMatchText = matches[matches.length - 1] || 'Super Match';
+
+            document.getElementById('super-match-input-box').innerHTML = `
+                <strong style="color:var(--gold); display:block; margin-bottom:8px;">${superMatchText}</strong>
+                <div class="score-inputs">
+                    <span>${fixture.team_a.team_name}</span>
+                    <input type="number" id="super-goal-a" value="0">
+                    <span>-</span>
+                    <input type="number" id="super-goal-b" value="0">
+                    <span>${fixture.team_b.team_name}</span>
+                </div>
+            `;
+
+            document.getElementById('superResultModal').style.display = 'flex';
+        }
+
+        async function submitSuperMatchResult() {
+            const goalA = parseInt(document.getElementById('super-goal-a').value) || 0;
+            const goalB = parseInt(document.getElementById('super-goal-b').value) || 0;
+            const url = document.getElementById('super-screenshot-url-input').value;
+
+            if (!url) { alert("স্ক্রিনশট লিংক দিন!"); return; }
+            if (goalA === goalB) { alert("সুপার ম্যাচ ড্র হতে পারবে না! বিজয়ী নির্ধারণ বাধ্যতামূলক।"); return; }
+
+            await db.from('match_results').insert([{
+                fixture_id: activeFixtureId,
+                score_a: goalA,
+                score_b: goalB,
+                screenshot_url: url,
+                status: 'Super_Result_Pending'
+            }]);
+
+            closeModals();
+            fetchFixtures();
+            alert("সুপার ম্যাচের রেজাল্ট অ্যাডমিন প্যানেলে পাঠানো হয়েছে!");
+        }
+
+        // টাই-ব্রেকার লজিকসহ পয়েন্ট টেবিল গণনা
         async function calculatePoints() {
             const { data: teams } = await db.from('teams').select('*');
             const { data: results } = await db.from('match_results').select('*, fixtures(*)').eq('status', 'Approved');
 
             if (!teams) return;
             let stats = {};
-            teams.forEach(t => { stats[t.id] = { name: t.team_name, played: 0, won: 0, draw: 0, lost: 0, pts: 0 }; });
+            teams.forEach(t => { 
+                stats[t.id] = { name: t.team_name, played: 0, won: 0, draw: 0, lost: 0, gf: 0, ga: 0, gd: 0, pts: 0 }; 
+            });
 
             if (results) {
                 results.forEach(r => {
                     const f = r.fixtures;
                     if (f && stats[f.team_a_id] && stats[f.team_b_id]) {
-                        stats[f.team_a_id].played++; stats[f.team_b_id].played++;
+                        stats[f.team_a_id].played++; 
+                        stats[f.team_b_id].played++;
+
+                        stats[f.team_a_id].gf += r.score_a;
+                        stats[f.team_a_id].ga += r.score_b;
+                        stats[f.team_b_id].gf += r.score_b;
+                        stats[f.team_b_id].ga += r.score_a;
+
                         if (r.score_a > r.score_b) {
                             stats[f.team_a_id].won++; stats[f.team_a_id].pts += 3; stats[f.team_b_id].lost++;
                         } else if (r.score_b > r.score_a) {
@@ -637,13 +823,23 @@
                 });
             }
 
-            document.getElementById('points-table-body').innerHTML = Object.values(stats).map(s => `
+            Object.values(stats).forEach(s => { s.gd = s.gf - s.ga; });
+
+            let sortedStats = Object.values(stats).sort((a,b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;  
+                if (b.gd !== a.gd) return b.gd - a.gd;     
+                if (b.gf !== a.gf) return b.gf - a.gf;     
+                return b.won - a.won;                       
+            });
+
+            document.getElementById('points-table-body').innerHTML = sortedStats.map(s => `
                 <tr>
                     <td><strong>${s.name}</strong></td>
                     <td>${s.played}</td>
                     <td>${s.won}</td>
                     <td>${s.draw}</td>
                     <td>${s.lost}</td>
+                    <td style="color:${s.gd > 0 ? 'var(--cyan)' : (s.gd < 0 ? 'var(--danger)' : 'inherit')}; font-weight:bold;">${s.gd > 0 ? '+' + s.gd : s.gd}</td>
                     <td><strong>${s.pts}</strong></td>
                 </tr>
             `).join('');
@@ -660,30 +856,51 @@
         }
 
         async function loadAdminApprovals() {
+            // ১. সাধারণ স্কোয়াড
             const { data: squads } = await db.from('squad_submissions').select('*, teams(team_name), fixtures(*)').eq('status', 'Pending');
-            const sqContainer = document.getElementById('pending-squads-list');
-            
-            sqContainer.innerHTML = (squads && squads.length > 0) ? squads.map(s => `
+            document.getElementById('pending-squads-list').innerHTML = (squads && squads.length > 0) ? squads.map(s => `
                 <div class="approval-card">
                     <div><strong>Match ${s.fixtures.matchday}:</strong> ${s.teams.team_name}</div>
                     <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
                     <div style="margin-top:5px;">
-                        <label>ম্যাচের তারিখ নির্বাচন করুন:</label>
                         <input type="date" id="match-date-${s.fixture_id}">
                     </div>
-                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">তারিখসহ স্কোয়াড এপ্রুভ করুন</button>
+                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">এপ্রুভ করুন</button>
                 </div>
             `).join('') : '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
 
+            // ২. মূল ৫ ম্যাচের রেজাল্ট
             const { data: results } = await db.from('match_results').select('*, fixtures(*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name))').eq('status', 'Pending');
-            const resContainer = document.getElementById('pending-results-list');
-            resContainer.innerHTML = (results && results.length > 0) ? results.map(r => `
+            document.getElementById('pending-results-list').innerHTML = (results && results.length > 0) ? results.map(r => `
                 <div class="approval-card">
                     <div><strong>Match ${r.fixtures.matchday}:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS (${r.score_b}) ${r.fixtures.team_b.team_name}</div>
                     <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
-                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveResult(${r.id}, ${r.fixture_id})">Approve Result</button>
+                    <div style="display:flex; gap:10px; margin-top:8px;">
+                        <button class="btn-action" style="background:var(--success);" onclick="approveResult(${r.id}, ${r.fixture_id}, false)">Approve Winner</button>
+                        <button class="btn-action btn-super" onclick="approveResult(${r.id}, ${r.fixture_id}, true)">Approve as Draw (Needs Super Match)</button>
+                    </div>
                 </div>
             `).join('') : '<p>কোনো রেজাল্ট পেন্ডিং নেই।</p>';
+
+            // ৩. সুপার প্লেয়ার স্কোয়াড
+            const { data: superSquads } = await db.from('squad_submissions').select('*, teams(team_name), fixtures(*)').eq('status', 'Super_Pending');
+            document.getElementById('pending-super-squads-list').innerHTML = (superSquads && superSquads.length > 0) ? superSquads.map(s => `
+                <div class="approval-card">
+                    <div><strong>Match ${s.fixtures.matchday}:</strong> ${s.teams.team_name}</div>
+                    <div><strong>সুপার প্লেয়ার:</strong> ${s.player_list}</div>
+                    <button class="btn-action btn-super" style="margin-top:5px;" onclick="approveSuperSquad(${s.id}, ${s.fixture_id})">এপ্রুভ সুপার প্লেয়ার</button>
+                </div>
+            `).join('') : '<p>কোনো সুপার প্লেয়ার পেন্ডিং নেই।</p>';
+
+            // ৪. সুপার ম্যাচ রেজাল্ট
+            const { data: superResults } = await db.from('match_results').select('*, fixtures(*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name))').eq('status', 'Super_Result_Pending');
+            document.getElementById('pending-super-results-list').innerHTML = (superResults && superResults.length > 0) ? superResults.map(r => `
+                <div class="approval-card">
+                    <div><strong>Super Match ${r.fixtures.matchday}:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS (${r.score_b}) ${r.fixtures.team_b.team_name}</div>
+                    <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
+                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSuperResult(${r.id}, ${r.fixture_id}, ${r.score_a}, ${r.score_b})">Approve Super Match Final Winner</button>
+                </div>
+            `).join('') : '<p>কোনো সুপার রেজাল্ট পেন্ডিং নেই।</p>';
         }
 
         async function approveSquadAndSetDate(squadId, fixtureId) {
@@ -720,10 +937,76 @@
             alert("তারিখ ও অটো-র্যান্ডম ৫টি ১v১ ম্যাচ সফলভাবে তৈরি হয়েছে!");
         }
 
-        async function approveResult(id, fixtureId) {
-            await db.from('match_results').update({ status: 'Approved' }).eq('id', id);
+        async function approveResult(id, fixtureId, isDraw) {
+            if (isDraw) {
+                await db.from('match_results').update({ status: 'Approved_Draw' }).eq('id', id);
+                await db.from('fixtures').update({ status: 'Super Match Needed' }).eq('id', fixtureId);
+                alert("ম্যাচ ড্র হিসেবে এপ্রুভ করা হয়েছে! এখন ক্যাপ্টেনরা সুপার প্লেয়ার বেছে নেবেন।");
+            } else {
+                await db.from('match_results').update({ status: 'Approved' }).eq('id', id);
+                await db.from('fixtures').update({ status: 'Completed' }).eq('id', fixtureId);
+                alert("রেজাল্ট এপ্রুভ হয়েছে এবং বিজয়ী নির্ধারিত হয়েছে!");
+            }
+            loadAdminApprovals(); fetchFixtures(); calculatePoints();
+        }
+
+        async function approveSuperSquad(squadId, fixtureId) {
+            await db.from('squad_submissions').update({ status: 'Approved' }).eq('id', squadId);
+
+            const { data: superSquads } = await db.from('squad_submissions')
+                .select('*')
+                .eq('fixture_id', fixtureId)
+                .eq('status', 'Approved')
+                .like('player_list', '%[SUPER]%');
+
+            if (superSquads && superSquads.length === 2) {
+                let pA = superSquads[0].player_list.replace('[SUPER]', '').trim();
+                let pB = superSquads[1].player_list.replace('[SUPER]', '').trim();
+
+                const { data: fx } = await db.from('fixtures').select('squad_matches').eq('id', fixtureId).single();
+                let updatedSquadMatches = (fx.squad_matches || '') + ` | [SUPER MATCH] ${pA} VS ${pB}`;
+
+                await db.from('fixtures').update({
+                    squad_matches: updatedSquadMatches,
+                    status: 'Super Match Scheduled'
+                }).eq('id', fixtureId);
+
+                alert("উভয় দলের সুপার প্লেয়ার এপ্রুভড! ১v১ সুপার ম্যাচ চালু হলো।");
+            } else {
+                alert("১টি টিমের সুপার প্লেয়ার এপ্রুভ হয়েছে, অপর দলের জন্য অপেক্ষা করা হচ্ছে।");
+            }
+            loadAdminApprovals(); fetchFixtures();
+        }
+
+        async function approveSuperResult(resultId, fixtureId, scoreA, scoreB) {
+            const { data: prevRes } = await db.from('match_results')
+                .select('*')
+                .eq('fixture_id', fixtureId)
+                .eq('status', 'Approved_Draw')
+                .single();
+
+            let finalA = (prevRes ? prevRes.score_a : 2);
+            let finalB = (prevRes ? prevRes.score_b : 2);
+
+            if (scoreA > scoreB) finalA += 1;
+            else if (scoreB > scoreA) finalB += 1;
+
+            if (prevRes) {
+                await db.from('match_results').update({
+                    score_a: finalA,
+                    score_b: finalB,
+                    status: 'Approved'
+                }).eq('id', prevRes.id);
+
+                await db.from('match_results').delete().eq('id', resultId);
+            } else {
+                await db.from('match_results').update({ status: 'Approved' }).eq('id', resultId);
+            }
+
             await db.from('fixtures').update({ status: 'Completed' }).eq('id', fixtureId);
-            loadAdminApprovals(); fetchFixtures(); calculatePoints(); alert("রেজাল্ট এপ্রুভ হয়েছে!");
+
+            loadAdminApprovals(); fetchFixtures(); calculatePoints();
+            alert("সুপার ম্যাচের রেজাল্ট সফলভাবে এপ্রুভ হয়েছে এবং পয়েন্ট টেবিলে বিজয়ী আপডেট করা হয়েছে!");
         }
 
         async function generateRandomFixtures() {
