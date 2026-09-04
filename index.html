@@ -273,7 +273,6 @@
         </div>
     </div>
 
-    <!-- ৫ জন প্লেয়ারের স্কোয়াড মোডাল -->
     <div id="squadModal" class="modal">
         <div class="modal-content">
             <h3>৫ জন প্লেয়ারের স্কোয়াড সাবমিট করুন</h3>
@@ -289,7 +288,6 @@
         </div>
     </div>
 
-    <!-- সুপার ম্যাচ প্লেয়ার সিলেকশন মোডাল -->
     <div id="superSquadModal" class="modal">
         <div class="modal-content">
             <h3>সুপার ম্যাচের জন্য ১ জন প্লেয়ার সিলেক্ট করুন</h3>
@@ -303,7 +301,6 @@
         </div>
     </div>
 
-    <!-- মূল ৫টি ম্যাচ রেজাল্ট সাবমিট মোডাল -->
     <div id="resultModal" class="modal">
         <div class="modal-content">
             <h3>৫টি ১v১ ম্যাচের গোল ও সাব/সোয়াপ ইনপুট</h3>
@@ -321,13 +318,10 @@
         </div>
     </div>
 
-    <!-- সুপার ম্যাচ স্কোর সাবমিট মোডাল -->
     <div id="superResultModal" class="modal">
         <div class="modal-content">
             <h3>সুপার ম্যাচ (১v১) ফলাফল ইনপুট</h3>
-            <div class="match-score-row" id="super-match-input-box">
-                <!-- Dynamic Content -->
-            </div>
+            <div class="match-score-row" id="super-match-input-box"></div>
             <div class="form-group">
                 <label>সুপার ম্যাচ স্ক্রিনশট লিংক (Image URL)</label>
                 <input type="text" id="super-screenshot-url-input" placeholder="https://imgur.com/example.png">
@@ -337,7 +331,6 @@
         </div>
     </div>
 
-    <!-- অ্যাডমিন প্যানেল -->
     <div id="adminModal" class="modal">
         <div class="modal-content">
             <h3>অ্যাডমিন কন্ট্রোল প্যানেল</h3>
@@ -398,7 +391,6 @@
 
         let loggedInCaptain = null;
         let activeFixtureId = null;
-        let currentFixtureData = null;
 
         async function init() {
             await fetchNotice();
@@ -461,14 +453,20 @@
                     <div style="color:var(--cyan)">ক্যাপ্টেন: ${t.captain_name}</div>
                     <ol>
                         <li><strong>${t.captain_name} (Captain)</strong></li>
-                        ${t.players.map(p => `<li>${p.player_name}</li>`).join('')}
+                        ${t.players ? t.players.map(p => `<li>${p.player_name}</li>`).join('') : ''}
                     </ol>
                 </div>
             `).join('');
         }
 
         async function fetchFixtures() {
-            const { data: fixtures } = await db.from('fixtures').select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name), match_results(*)');
+            const { data: fixtures } = await db.from('fixtures').select('*');
+            const { data: teams } = await db.from('teams').select('*');
+            const { data: results } = await db.from('match_results').select('*');
+
+            const teamMap = {};
+            if (teams) teams.forEach(t => teamMap[t.id] = t);
+
             const container = document.getElementById('fixtures-list');
             const resultContainer = document.getElementById('result-submit-list');
 
@@ -479,17 +477,15 @@
             }
 
             container.innerHTML = fixtures.map(f => {
-                let res = (f.match_results && f.match_results.length > 0) ? f.match_results[f.match_results.length - 1] : null;
-                let headerTitle = `${f.team_a?.team_name} VS ${f.team_b?.team_name}`;
-                
+                let teamA = teamMap[f.team_a_id] ? teamMap[f.team_a_id].team_name : 'Team A';
+                let teamB = teamMap[f.team_b_id] ? teamMap[f.team_b_id].team_name : 'Team B';
+
+                let matchRes = results ? results.filter(r => r.fixture_id === f.id && r.status === 'Approved') : [];
+                let res = matchRes.length > 0 ? matchRes[matchRes.length - 1] : null;
+
+                let headerTitle = `${teamA} VS ${teamB}`;
                 if (res) {
-                    headerTitle = `
-                        ${f.team_a?.team_name} 
-                        <span style="color:var(--gold); font-size:1.2rem; font-weight:bold;">(${res.score_a})</span> 
-                        <span style="color:var(--cyan);">VS</span> 
-                        <span style="color:var(--gold); font-size:1.2rem; font-weight:bold;">(${res.score_b})</span> 
-                        ${f.team_b?.team_name}
-                    `;
+                    headerTitle = `${teamA} <span style="color:var(--gold); font-size:1.2rem;">(${res.score_a})</span> <span style="color:var(--cyan);">VS</span> <span style="color:var(--gold); font-size:1.2rem;">(${res.score_b})</span> ${teamB}`;
                 }
 
                 let versusHtml = '';
@@ -497,7 +493,7 @@
                     let matches = f.squad_matches.split('|');
                     versusHtml = `
                         <div class="versus-box">
-                            <strong style="color:var(--cyan)">১v১ ম্যাচের প্লেয়ার ও রেজাল্ট বিস্তারিত:</strong>
+                            <strong style="color:var(--cyan)">১v১ ম্যাচের প্লেয়ার বিস্তারিত:</strong>
                             <div style="margin-top:8px; font-size:0.88rem; line-height: 1.6;">
                                 ${matches.map((m, i) => `<div style="border-bottom:1px dashed #272d3d; padding:3px 0;"><strong>${m.includes('[SUPER MATCH]') ? 'সুপার ম্যাচ' : 'ম্যাচ ' + (i+1)}:</strong> ${m.trim()}</div>`).join('')}
                             </div>
@@ -506,7 +502,6 @@
                 }
 
                 let actionBtn = `<button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>`;
-                
                 if (f.status === 'Super Match Needed') {
                     actionBtn = `<button class="btn-action btn-super" onclick="openSuperSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Super Player Select</button>`;
                 }
@@ -527,6 +522,9 @@
             }).join('');
 
             resultContainer.innerHTML = fixtures.map(f => {
+                let teamA = teamMap[f.team_a_id] ? teamMap[f.team_a_id].team_name : 'Team A';
+                let teamB = teamMap[f.team_b_id] ? teamMap[f.team_b_id].team_name : 'Team B';
+
                 let submitBtn = `<button class="btn-action" onclick="openResultModal(${f.id})">Submit Score</button>`;
                 if (f.status === 'Super Match Scheduled') {
                     submitBtn = `<button class="btn-action btn-super" onclick="openSuperResultModal(${f.id})">Submit Super Score</button>`;
@@ -537,7 +535,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
-                                <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
+                                <div style="font-weight:bold; margin-top:5px;">${teamA} VS ${teamB}</div>
                                 <small>স্ট্যাটাস: ${f.status}</small>
                             </div>
                             ${submitBtn}
@@ -547,7 +545,6 @@
             }).join('');
         }
 
-        // সাধারণ ৫ জনের স্কোয়াড মোডাল
         async function openSquadModal(fixtureId, teamAId, teamBId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
             if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
@@ -587,18 +584,19 @@
 
             const squadList = selectedPlayers.join(', ');
 
-            await db.from('squad_submissions').insert([{
+            const { error } = await db.from('squad_submissions').insert([{
                 fixture_id: activeFixtureId,
                 team_id: loggedInCaptain.id,
                 player_list: squadList,
                 status: 'Pending'
             }]);
 
+            if (error) { alert("স্কোয়াড সাবমিটে সমস্যা: " + error.message); return; }
+
             closeModals();
             alert("স্কোয়াড সাবমিট করা হয়েছে! এডমিন তারিখ ও ১v১ ভার্সেস এপ্রুভ করবেন।");
         }
 
-        // সুপার প্লেয়ার সিলেকশন মোডাল
         async function openSuperSquadModal(fixtureId, teamAId, teamBId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
             if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
@@ -626,41 +624,41 @@
         async function submitSuperSquad() {
             const player = document.getElementById('super-player-select').value;
 
-            await db.from('squad_submissions').insert([{
+            const { error } = await db.from('squad_submissions').insert([{
                 fixture_id: activeFixtureId,
                 team_id: loggedInCaptain.id,
                 player_list: `[SUPER] ${player}`,
                 status: 'Super_Pending'
             }]);
 
+            if (error) { alert("সুপার প্লেয়ার সাবমিটে সমস্যা: " + error.message); return; }
+
             closeModals();
-            alert("সুপার প্লেয়ার সাবমিট করা হয়েছে! অপর দল সাবমিট করলে অ্যাডমিন ১v১ সুপার ম্যাচ ফিক্স করবেন।");
+            alert("সুপার প্লেয়ার সাবমিট করা হয়েছে!");
         }
 
-        // মূল ৫টি ম্যাচ রেজাল্ট
         async function openResultModal(fixtureId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
 
-            const { data: fixture } = await db.from('fixtures')
-                .select('*, team_a:teams!team_a_id(team_name, captain_name), team_b:teams!team_b_id(team_name, captain_name)')
-                .eq('id', fixtureId).single();
-
+            const { data: fixture } = await db.from('fixtures').select('*').eq('id', fixtureId).single();
             if (!fixture || !fixture.squad_matches) {
                 alert("এই ম্যাচের দুই দলের স্কোয়াড এখনো এপ্রুভ হয়নি!");
                 return;
             }
 
+            const { data: teamA } = await db.from('teams').select('*').eq('id', fixture.team_a_id).single();
+            const { data: teamB } = await db.from('teams').select('*').eq('id', fixture.team_b_id).single();
+
             activeFixtureId = fixtureId;
-            currentFixtureData = fixture;
 
             const { data: playersA } = await db.from('players').select('player_name').eq('team_id', fixture.team_a_id);
             const { data: playersB } = await db.from('players').select('player_name').eq('team_id', fixture.team_b_id);
 
-            let listA = [fixture.team_a.captain_name];
-            if (playersA) playersA.forEach(p => { if (p.player_name.trim().toLowerCase() !== fixture.team_a.captain_name.trim().toLowerCase()) listA.push(p.player_name); });
+            let listA = [teamA.captain_name];
+            if (playersA) playersA.forEach(p => { if (p.player_name.trim().toLowerCase() !== teamA.captain_name.trim().toLowerCase()) listA.push(p.player_name); });
 
-            let listB = [fixture.team_b.captain_name];
-            if (playersB) playersB.forEach(p => { if (p.player_name.trim().toLowerCase() !== fixture.team_b.captain_name.trim().toLowerCase()) listB.push(p.player_name); });
+            let listB = [teamB.captain_name];
+            if (playersB) playersB.forEach(p => { if (p.player_name.trim().toLowerCase() !== teamB.captain_name.trim().toLowerCase()) listB.push(p.player_name); });
 
             const matches = fixture.squad_matches.split('|');
             const container = document.getElementById('modal-5-matches-container');
@@ -672,10 +670,6 @@
                 let optionsA = listA.map(p => `<option value="${p}" ${p === currentP_A ? 'selected' : ''}>${p}</option>`).join('');
                 let optionsB = listB.map(p => `<option value="${p}" ${p === currentP_B ? 'selected' : ''}>${p}</option>`).join('');
 
-                let scores = m.match(/\((\d+)\)/g);
-                let scoreA_val = (scores && scores[0]) ? scores[0].replace(/[()]/g, '') : '0';
-                let scoreB_val = (scores && scores[1]) ? scores[1].replace(/[()]/g, '') : '0';
-
                 return `
                     <div class="match-score-row">
                         <strong style="color:var(--gold); font-size:0.85rem;">ম্যাচ ${idx+1} (Sub/Swap Editable):</strong>
@@ -685,11 +679,11 @@
                             <select class="edit-player-b">${optionsB}</select>
                         </div>
                         <div class="score-inputs">
-                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_a.team_name} Goal</span>
-                            <input type="number" class="match-score-a" value="${scoreA_val}">
+                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${teamA.team_name}</span>
+                            <input type="number" class="match-score-a" value="0">
                             <span>-</span>
-                            <input type="number" class="match-score-b" value="${scoreB_val}">
-                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${fixture.team_b.team_name} Goal</span>
+                            <input type="number" class="match-score-b" value="0">
+                            <span style="font-size:0.8rem; width:90px; text-overflow:ellipsis; overflow:hidden;">${teamB.team_name}</span>
                         </div>
                     </div>
                 `;
@@ -726,7 +720,7 @@
             let newSquadMatches = updatedMatches.join(' | ');
             await db.from('fixtures').update({ squad_matches: newSquadMatches }).eq('id', activeFixtureId);
 
-            await db.from('match_results').insert([{
+            const { error } = await db.from('match_results').insert([{
                 fixture_id: activeFixtureId,
                 score_a: winsA,
                 score_b: winsB,
@@ -734,21 +728,21 @@
                 status: 'Pending'
             }]);
 
+            if (error) { alert("রেজাল্ট সেভ হতে সমস্যা: " + error.message); return; }
+
             closeModals();
             fetchFixtures();
-            alert(`রেজাল্ট সফলভাবে জমা হয়েছে! জেনারেটেড মোট জয়: ${currentFixtureData.team_a.team_name} (${winsA}) VS (${winsB}) ${currentFixtureData.team_b.team_name}`);
+            alert(`রেজাল্ট সফলভাবে জমা হয়েছে! অ্যাডমিন প্যানেলে অনুমোদনের অপেক্ষায় রয়েছে।`);
         }
 
-        // সুপার ম্যাচ রেজাল্ট সাবমিট
         async function openSuperResultModal(fixtureId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
 
-            const { data: fixture } = await db.from('fixtures')
-                .select('*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name)')
-                .eq('id', fixtureId).single();
+            const { data: fixture } = await db.from('fixtures').select('*').eq('id', fixtureId).single();
+            const { data: teamA } = await db.from('teams').select('*').eq('id', fixture.team_a_id).single();
+            const { data: teamB } = await db.from('teams').select('*').eq('id', fixture.team_b_id).single();
 
             activeFixtureId = fixtureId;
-            currentFixtureData = fixture;
 
             let matches = fixture.squad_matches.split('|');
             let superMatchText = matches[matches.length - 1] || 'Super Match';
@@ -756,11 +750,11 @@
             document.getElementById('super-match-input-box').innerHTML = `
                 <strong style="color:var(--gold); display:block; margin-bottom:8px;">${superMatchText}</strong>
                 <div class="score-inputs">
-                    <span>${fixture.team_a.team_name}</span>
+                    <span>${teamA.team_name}</span>
                     <input type="number" id="super-goal-a" value="0">
                     <span>-</span>
                     <input type="number" id="super-goal-b" value="0">
-                    <span>${fixture.team_b.team_name}</span>
+                    <span>${teamB.team_name}</span>
                 </div>
             `;
 
@@ -773,9 +767,9 @@
             const url = document.getElementById('super-screenshot-url-input').value;
 
             if (!url) { alert("স্ক্রিনশট লিংক দিন!"); return; }
-            if (goalA === goalB) { alert("সুপার ম্যাচ ড্র হতে পারবে না! বিজয়ী নির্ধারণ বাধ্যতামূলক।"); return; }
+            if (goalA === goalB) { alert("সুপার ম্যাচ ড্র হতে পারবে না!"); return; }
 
-            await db.from('match_results').insert([{
+            const { error } = await db.from('match_results').insert([{
                 fixture_id: activeFixtureId,
                 score_a: goalA,
                 score_b: goalB,
@@ -783,15 +777,17 @@
                 status: 'Super_Result_Pending'
             }]);
 
+            if (error) { alert("সুপার রেজাল্ট সেভ হতে সমস্যা: " + error.message); return; }
+
             closeModals();
             fetchFixtures();
             alert("সুপার ম্যাচের রেজাল্ট অ্যাডমিন প্যানেলে পাঠানো হয়েছে!");
         }
 
-        // টাই-ব্রেকার লজিকসহ পয়েন্ট টেবিল গণনা
         async function calculatePoints() {
             const { data: teams } = await db.from('teams').select('*');
-            const { data: results } = await db.from('match_results').select('*, fixtures(*)').eq('status', 'Approved');
+            const { data: results } = await db.from('match_results').select('*').eq('status', 'Approved');
+            const { data: fixtures } = await db.from('fixtures').select('*');
 
             if (!teams) return;
             let stats = {};
@@ -799,9 +795,12 @@
                 stats[t.id] = { name: t.team_name, played: 0, won: 0, draw: 0, lost: 0, gf: 0, ga: 0, gd: 0, pts: 0 }; 
             });
 
+            const fixMap = {};
+            if (fixtures) fixtures.forEach(f => fixMap[f.id] = f);
+
             if (results) {
                 results.forEach(r => {
-                    const f = r.fixtures;
+                    const f = fixMap[r.fixture_id];
                     if (f && stats[f.team_a_id] && stats[f.team_b_id]) {
                         stats[f.team_a_id].played++; 
                         stats[f.team_b_id].played++;
@@ -855,52 +854,99 @@
             } else { alert("ভুল পাসওয়ার্ড!"); }
         }
 
+        // সম্পূর্ণ নির্ভরযোগ্য অ্যাডমিন লোডার (কোনো রিলেশনশিপ এরর আসবে না)
         async function loadAdminApprovals() {
-            // ১. সাধারণ স্কোয়াড
-            const { data: squads } = await db.from('squad_submissions').select('*, teams(team_name), fixtures(*)').eq('status', 'Pending');
-            document.getElementById('pending-squads-list').innerHTML = (squads && squads.length > 0) ? squads.map(s => `
-                <div class="approval-card">
-                    <div><strong>Match ${s.fixtures.matchday}:</strong> ${s.teams.team_name}</div>
-                    <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
-                    <div style="margin-top:5px;">
-                        <input type="date" id="match-date-${s.fixture_id}">
-                    </div>
-                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">এপ্রুভ করুন</button>
-                </div>
-            `).join('') : '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
+            const { data: allTeams } = await db.from('teams').select('id, team_name');
+            const teamMap = {};
+            if (allTeams) allTeams.forEach(t => teamMap[t.id] = t.team_name);
 
-            // ২. মূল ৫ ম্যাচের রেজাল্ট
-            const { data: results } = await db.from('match_results').select('*, fixtures(*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name))').eq('status', 'Pending');
-            document.getElementById('pending-results-list').innerHTML = (results && results.length > 0) ? results.map(r => `
-                <div class="approval-card">
-                    <div><strong>Match ${r.fixtures.matchday}:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS (${r.score_b}) ${r.fixtures.team_b.team_name}</div>
-                    <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
-                    <div style="display:flex; gap:10px; margin-top:8px;">
-                        <button class="btn-action" style="background:var(--success);" onclick="approveResult(${r.id}, ${r.fixture_id}, false)">Approve Winner</button>
-                        <button class="btn-action btn-super" onclick="approveResult(${r.id}, ${r.fixture_id}, true)">Approve as Draw (Needs Super Match)</button>
+            const { data: allFixtures } = await db.from('fixtures').select('id, matchday, team_a_id, team_b_id');
+            const fixMap = {};
+            if (allFixtures) allFixtures.forEach(f => fixMap[f.id] = f);
+
+            // ১. পেন্ডিং স্কোয়াড
+            const { data: squads, error: sqErr } = await db.from('squad_submissions').select('*').eq('status', 'Pending');
+            const sqContainer = document.getElementById('pending-squads-list');
+            if (sqErr) {
+                sqContainer.innerHTML = `<p style="color:var(--danger)">এরর: ${sqErr.message}</p>`;
+            } else if (squads && squads.length > 0) {
+                sqContainer.innerHTML = squads.map(s => `
+                    <div class="approval-card">
+                        <div><strong>Match ${fixMap[s.fixture_id]?.matchday || s.fixture_id}:</strong> ${teamMap[s.team_id] || 'Team'}</div>
+                        <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
+                        <div style="margin-top:5px;">
+                            <input type="date" id="match-date-${s.fixture_id}">
+                        </div>
+                        <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">এপ্রুভ করুন</button>
                     </div>
-                </div>
-            `).join('') : '<p>কোনো রেজাল্ট পেন্ডিং নেই।</p>';
+                `).join('');
+            } else {
+                sqContainer.innerHTML = '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
+            }
+
+            // ২. পেন্ডিং রেজাল্ট
+            const { data: results, error: resErr } = await db.from('match_results').select('*').eq('status', 'Pending');
+            const resContainer = document.getElementById('pending-results-list');
+            if (resErr) {
+                resContainer.innerHTML = `<p style="color:var(--danger)">এরর: ${resErr.message}</p>`;
+            } else if (results && results.length > 0) {
+                resContainer.innerHTML = results.map(r => {
+                    const fx = fixMap[r.fixture_id];
+                    const teamAName = teamMap[fx?.team_a_id] || 'Team A';
+                    const teamBName = teamMap[fx?.team_b_id] || 'Team B';
+                    return `
+                        <div class="approval-card">
+                            <div><strong>Match ${fx?.matchday || r.fixture_id}:</strong> ${teamAName} (${r.score_a}) VS (${r.score_b}) ${teamBName}</div>
+                            <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
+                            <div style="display:flex; gap:10px; margin-top:8px;">
+                                <button class="btn-action" style="background:var(--success);" onclick="approveResult(${r.id}, ${r.fixture_id}, false)">Approve Winner</button>
+                                <button class="btn-action btn-super" onclick="approveResult(${r.id}, ${r.fixture_id}, true)">Approve as Draw (Needs Super Match)</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                resContainer.innerHTML = '<p>কোনো রেজাল্ট পেন্ডিং নেই।</p>';
+            }
 
             // ৩. সুপার প্লেয়ার স্কোয়াড
-            const { data: superSquads } = await db.from('squad_submissions').select('*, teams(team_name), fixtures(*)').eq('status', 'Super_Pending');
-            document.getElementById('pending-super-squads-list').innerHTML = (superSquads && superSquads.length > 0) ? superSquads.map(s => `
-                <div class="approval-card">
-                    <div><strong>Match ${s.fixtures.matchday}:</strong> ${s.teams.team_name}</div>
-                    <div><strong>সুপার প্লেয়ার:</strong> ${s.player_list}</div>
-                    <button class="btn-action btn-super" style="margin-top:5px;" onclick="approveSuperSquad(${s.id}, ${s.fixture_id})">এপ্রুভ সুপার প্লেয়ার</button>
-                </div>
-            `).join('') : '<p>কোনো সুপার প্লেয়ার পেন্ডিং নেই।</p>';
+            const { data: superSquads, error: supSqErr } = await db.from('squad_submissions').select('*').eq('status', 'Super_Pending');
+            const supSqContainer = document.getElementById('pending-super-squads-list');
+            if (supSqErr) {
+                supSqContainer.innerHTML = `<p style="color:var(--danger)">এরর: ${supSqErr.message}</p>`;
+            } else if (superSquads && superSquads.length > 0) {
+                supSqContainer.innerHTML = superSquads.map(s => `
+                    <div class="approval-card">
+                        <div><strong>Match ${fixMap[s.fixture_id]?.matchday || s.fixture_id}:</strong> ${teamMap[s.team_id] || 'Team'}</div>
+                        <div><strong>সুপার প্লেয়ার:</strong> ${s.player_list}</div>
+                        <button class="btn-action btn-super" style="margin-top:5px;" onclick="approveSuperSquad(${s.id}, ${s.fixture_id})">এপ্রুভ সুপার প্লেয়ার</button>
+                    </div>
+                `).join('');
+            } else {
+                supSqContainer.innerHTML = '<p>কোনো সুপার প্লেয়ার পেন্ডিং নেই।</p>';
+            }
 
             // ৪. সুপার ম্যাচ রেজাল্ট
-            const { data: superResults } = await db.from('match_results').select('*, fixtures(*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name))').eq('status', 'Super_Result_Pending');
-            document.getElementById('pending-super-results-list').innerHTML = (superResults && superResults.length > 0) ? superResults.map(r => `
-                <div class="approval-card">
-                    <div><strong>Super Match ${r.fixtures.matchday}:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS (${r.score_b}) ${r.fixtures.team_b.team_name}</div>
-                    <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
-                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSuperResult(${r.id}, ${r.fixture_id}, ${r.score_a}, ${r.score_b})">Approve Super Match Final Winner</button>
-                </div>
-            `).join('') : '<p>কোনো সুপার রেজাল্ট পেন্ডিং নেই।</p>';
+            const { data: superResults, error: supResErr } = await db.from('match_results').select('*').eq('status', 'Super_Result_Pending');
+            const supResContainer = document.getElementById('pending-super-results-list');
+            if (supResErr) {
+                supResContainer.innerHTML = `<p style="color:var(--danger)">এরর: ${supResErr.message}</p>`;
+            } else if (superResults && superResults.length > 0) {
+                supResContainer.innerHTML = superResults.map(r => {
+                    const fx = fixMap[r.fixture_id];
+                    const teamAName = teamMap[fx?.team_a_id] || 'Team A';
+                    const teamBName = teamMap[fx?.team_b_id] || 'Team B';
+                    return `
+                        <div class="approval-card">
+                            <div><strong>Super Match ${fx?.matchday || r.fixture_id}:</strong> ${teamAName} (${r.score_a}) VS (${r.score_b}) ${teamBName}</div>
+                            <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
+                            <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSuperResult(${r.id}, ${r.fixture_id}, ${r.score_a}, ${r.score_b})">Approve Super Match Final Winner</button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                supResContainer.innerHTML = '<p>কোনো সুপার রেজাল্ট পেন্ডিং নেই।</p>';
+            }
         }
 
         async function approveSquadAndSetDate(squadId, fixtureId) {
@@ -1006,7 +1052,7 @@
             await db.from('fixtures').update({ status: 'Completed' }).eq('id', fixtureId);
 
             loadAdminApprovals(); fetchFixtures(); calculatePoints();
-            alert("সুপার ম্যাচের রেজাল্ট সফলভাবে এপ্রুভ হয়েছে এবং পয়েন্ট টেবিলে বিজয়ী আপডেট করা হয়েছে!");
+            alert("সুপার ম্যাচের রেজাল্ট সফলভাবে এপ্রুভ হয়েছে!");
         }
 
         async function generateRandomFixtures() {
