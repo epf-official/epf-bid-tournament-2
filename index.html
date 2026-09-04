@@ -21,8 +21,7 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text);
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
         }
 
         .header-banner {
@@ -30,10 +29,9 @@
             border-bottom: 2px solid var(--gold);
             text-align: center;
             padding: 20px 10px;
-            box-shadow: 0 4px 20px rgba(243, 156, 18, 0.2);
         }
 
-        .header-banner h1 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 2px; }
+        .header-banner h1 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 1px; }
 
         .notice-ticker {
             background: #11151f;
@@ -92,14 +90,11 @@
             padding: 15px;
             margin-bottom: 12px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
         }
 
         .badge { background: var(--gold); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .badge-status { background: var(--cyan); color: #000; }
 
         .btn-action {
             background: var(--cyan);
@@ -134,6 +129,14 @@
 
         .footer-auth { text-align: center; padding: 20px; border-top: 1px solid var(--border); margin-top: 40px; }
         .approval-card { background: #0d1017; border: 1px solid var(--border); padding: 12px; margin-bottom: 10px; border-radius: 6px; }
+        
+        .versus-box {
+            background: #0d1017;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid var(--cyan);
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -146,7 +149,6 @@
         <marquee id="notice-display">Supabase কানেক্ট হচ্ছে...</marquee>
     </div>
 
-    <!-- Active User Bar -->
     <div class="user-status-bar">
         <span id="login-status-text">স্ট্যাটাস: সাধারণ ভিজিটর</span>
         <div>
@@ -204,9 +206,9 @@
         <div id="rules" class="tab-content">
             <h2>নিয়মাবলী</h2>
             <div style="background: var(--panel-bg); padding: 15px; border-radius: 6px;">
-                <p>১. ক্যাপ্টেনদের নিজস্ব পাসওয়ার্ড দিয়ে 'Captain Login' করতে হবে।</p>
-                <p>২. প্রতিটি ম্যাচের আগে ৫ জন করে স্কোয়াড জমা দিলে এডমিন এপ্রুভালের পর ম্যাচটি খেলা যাবে।</p>
-                <p>৩. ম্যাচ শেষে ক্যাপ্টেন স্কোরের সাথে স্ক্রিনশট লিংক জমা দিবে যা এডমিন এপ্রুভ করার পর পয়েন্ট টেবিলে যুক্ত হবে।</p>
+                <p>১. ক্যাপ্টেন পাসওয়ার্ড দিয়ে 'Captain Login' করে ৫ জন প্লেয়ারের স্কোয়াড সাবমিট করবেন।</p>
+                <p>২. দুই টিমের স্কোয়াড জমা পড়লে অ্যাডমিন তারিখ নির্ধারণ করবেন এবং সিস্টেম অটোমেটিক ৫টি র্যান্ডম ১v১ ম্যাচ ফিক্স করে দেবে।</p>
+                <p>৩. ম্যাচ শেষে ক্যাপ্টেনরা ফলাফল ও প্রমাণের জন্য স্ক্রিনশট লিংক জমা দেবেন।</p>
             </div>
         </div>
     </div>
@@ -215,7 +217,7 @@
         <button class="btn-action" onclick="openAdminModal()">Admin Panel</button>
     </div>
 
-    <!-- Captain Login Modal -->
+    <!-- Modals -->
     <div id="captainLoginModal" class="modal">
         <div class="modal-content">
             <h3>ক্যাপ্টেন লগইন</h3>
@@ -232,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Squad Submission Modal -->
     <div id="squadModal" class="modal">
         <div class="modal-content">
             <h3>৫ জন প্লেয়ারের স্কোয়াড সাবমিট করুন</h3>
@@ -248,7 +249,6 @@
         </div>
     </div>
 
-    <!-- Result Submission Modal -->
     <div id="resultModal" class="modal">
         <div class="modal-content">
             <h3>রেজাল্ট ও স্ক্রিনশট সাবমিশন</h3>
@@ -269,7 +269,6 @@
         </div>
     </div>
 
-    <!-- Admin Panel Modal -->
     <div id="adminModal" class="modal">
         <div class="modal-content">
             <h3>অ্যাডমিন কন্ট্রোল প্যানেল</h3>
@@ -281,18 +280,16 @@
                 <button class="btn-action" onclick="verifyAdmin()">লগইন</button>
             </div>
             <div id="admin-controls" style="display:none;">
-                <h4>পেন্ডিং স্কোয়াড এপ্রুভাল</h4>
+                <h4>পেন্ডিং স্কোয়াড ও ম্যাচ ডেট ফিক্স</h4>
                 <div id="pending-squads-list">কোনো স্কোয়াড পেন্ডিং নেই।</div>
                 <hr style="border-color:var(--border);">
 
-                <h4>পেন্ডিং রেজাল্ট ও স্ক্রিনশট এপ্রুভাল</h4>
+                <h4>পেন্ডিং রেজাল্ট এপ্রুভাল</h4>
                 <div id="pending-results-list">কোনো রেজাল্ট পেন্ডিং নেই।</div>
                 <hr style="border-color:var(--border);">
 
                 <div class="form-group">
-                    <label>তারিখসহ অটো-ফিক্সচার জেনারেট</label>
-                    <input type="date" id="fixture-start-date">
-                    <button class="btn-action" style="margin-top:5px; background:var(--success);" onclick="generateRandomFixtures()">র্যান্ডম ফিকশ্চার জেনারেট করুন</button>
+                    <button class="btn-action" style="background:var(--success);" onclick="generateRandomFixtures()">১২টি র্যান্ডম ফিকশ্চার জেনারেট করুন</button>
                 </div>
                 <hr style="border-color:var(--border);">
 
@@ -322,7 +319,7 @@
         const SUPABASE_KEY = 'sb_publishable_Y_lWfoWmIST7HTcATF1MIg_A3JIKGhv';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let loggedInCaptain = null; // Current Session
+        let loggedInCaptain = null;
         let activeFixtureId = null;
 
         async function init() {
@@ -339,7 +336,6 @@
             event.target.classList.add('active');
         }
 
-        // Captain Auth
         async function openCaptainLoginModal() {
             const { data: teams } = await db.from('teams').select('*');
             const select = document.getElementById('login-team-select');
@@ -355,11 +351,11 @@
 
             if (team) {
                 loggedInCaptain = team;
-                document.getElementById('login-status-text').innerText = `লগইনড ক্যাপ্টেন: ${team.captain_name} (${team.team_name})`;
+                document.getElementById('login-status-text').innerText = `লগইনড: ${team.captain_name} (${team.team_name})`;
                 document.getElementById('cap-login-btn').style.display = 'none';
                 document.getElementById('logout-btn').style.display = 'inline-block';
                 closeModals();
-                alert("ক্যাপ্টেন লগইন সফল হয়েছে!");
+                alert("লগইন সফল হয়েছে!");
             } else {
                 alert("ভুল পাসওয়ার্ড!");
             }
@@ -372,7 +368,6 @@
             document.getElementById('logout-btn').style.display = 'none';
         }
 
-        // Fetch Data
         async function fetchNotice() {
             const { data } = await db.from('notices').select('*').order('id', { ascending: false }).limit(1);
             if (data && data.length > 0) document.getElementById('notice-display').innerText = data[0].notice_text;
@@ -402,29 +397,49 @@
                 return;
             }
 
-            container.innerHTML = fixtures.map(f => `
-                <div class="fixture-card">
-                    <div>
-                        <span class="badge">Matchday ${f.matchday} (${f.match_date || 'TBD'})</span>
-                        <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
-                        <small>স্ট্যাটাস: ${f.status}</small>
+            container.innerHTML = fixtures.map(f => {
+                let versusHtml = '';
+                if (f.squad_matches) {
+                    let matches = f.squad_matches.split('|');
+                    versusHtml = `
+                        <div class="versus-box">
+                            <strong style="color:var(--cyan)">অটো র্যান্ডম ১v১ প্লেয়ার ফিক্সচার:</strong>
+                            <div style="margin-top:5px; font-size:0.9rem;">
+                                ${matches.map((m, i) => `<div><strong>ম্যাচ ${i+1}:</strong> ${m}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="fixture-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
+                                <div style="font-weight:bold; margin-top:5px; font-size:1.1rem;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
+                                <small>স্ট্যাটাস: ${f.status}</small>
+                            </div>
+                            <button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>
+                        </div>
+                        ${versusHtml}
                     </div>
-                    <button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             resultContainer.innerHTML = fixtures.map(f => `
                 <div class="fixture-card">
-                    <div>
-                        <span class="badge">Matchday ${f.matchday}</span>
-                        <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span class="badge">Match ${f.matchday} (${f.match_date ? f.match_date : 'Date: TBD'})</span>
+                            <div style="font-weight:bold; margin-top:5px;">${f.team_a?.team_name} VS ${f.team_b?.team_name}</div>
+                            <small>স্ট্যাটাস: ${f.status}</small>
+                        </div>
+                        <button class="btn-action" onclick="openResultModal(${f.id}, '${f.team_a?.team_name}', '${f.team_b?.team_name}')">Submit Score</button>
                     </div>
-                    <button class="btn-action" onclick="openResultModal(${f.id}, '${f.team_a?.team_name}', '${f.team_b?.team_name}')">Submit Score</button>
                 </div>
             `).join('');
         }
 
-        // Squad Actions
         async function openSquadModal(fixtureId, teamAId, teamBId) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
             if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
@@ -453,10 +468,9 @@
             }]);
 
             closeModals();
-            alert("স্কোয়াড সাবমিট করা হয়েছে! এডমিন এপ্রুভালের জন্য পেন্ডিং আছে।");
+            alert("স্কোয়াড সাবমিট করা হয়েছে! এডমিন তারিখ সেট করে এপ্রুভ করবেন।");
         }
 
-        // Result Actions
         function openResultModal(fixtureId, teamAName, teamBName) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
             activeFixtureId = fixtureId;
@@ -484,7 +498,6 @@
             alert("স্কোর ও স্ক্রিনশট সাবমিট হয়েছে! এডমিন এপ্রুভ করলে পয়েন্ট টেবিলে যুক্ত হবে।");
         }
 
-        // Points Table
         async function calculatePoints() {
             const { data: teams } = await db.from('teams').select('*');
             const { data: results } = await db.from('match_results').select('*, fixtures(*)').eq('status', 'Approved');
@@ -522,7 +535,6 @@
             `).join('');
         }
 
-        // Admin Auth & Approvals
         function openAdminModal() { document.getElementById('adminModal').style.display = 'flex'; }
 
         function verifyAdmin() {
@@ -534,31 +546,68 @@
         }
 
         async function loadAdminApprovals() {
-            // Squads
-            const { data: squads } = await db.from('squad_submissions').select('*, teams(team_name)').eq('status', 'Pending');
+            const { data: squads } = await db.from('squad_submissions').select('*, teams(team_name), fixtures(*)').eq('status', 'Pending');
             const sqContainer = document.getElementById('pending-squads-list');
+            
             sqContainer.innerHTML = (squads && squads.length > 0) ? squads.map(s => `
                 <div class="approval-card">
-                    <div><strong>${s.teams.team_name}:</strong> ${s.player_list}</div>
-                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquad(${s.id})">Approve Squad</button>
+                    <div><strong>Match ${s.fixtures.matchday}:</strong> ${s.teams.team_name}</div>
+                    <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
+                    <div style="margin-top:5px;">
+                        <label>ম্যাচের তারিখ নির্বাচন করুন:</label>
+                        <input type="date" id="match-date-${s.fixture_id}">
+                    </div>
+                    <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">তারিখসহ স্কোয়াড এপ্রুভ করুন</button>
                 </div>
             `).join('') : '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
 
-            // Results
             const { data: results } = await db.from('match_results').select('*, fixtures(*, team_a:teams!team_a_id(team_name), team_b:teams!team_b_id(team_name))').eq('status', 'Pending');
             const resContainer = document.getElementById('pending-results-list');
             resContainer.innerHTML = (results && results.length > 0) ? results.map(r => `
                 <div class="approval-card">
-                    <div><strong>Match:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS ${r.fixtures.team_b.team_name} (${r.score_b})</div>
+                    <div><strong>Match ${r.fixtures.matchday}:</strong> ${r.fixtures.team_a.team_name} (${r.score_a}) VS ${r.fixtures.team_b.team_name} (${r.score_b})</div>
                     <div><a href="${r.screenshot_url}" target="_blank" style="color:var(--cyan)">স্ক্রিনশট দেখুন</a></div>
                     <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveResult(${r.id}, ${r.fixture_id})">Approve Result</button>
                 </div>
             `).join('') : '<p>কোনো রেজাল্ট পেন্ডিং নেই।</p>';
         }
 
-        async function approveSquad(id) {
-            await db.from('squad_submissions').update({ status: 'Approved' }).eq('id', id);
-            loadAdminApprovals(); alert("স্কোয়াড এপ্রুভ হয়েছে!");
+        async function approveSquadAndSetDate(squadId, fixtureId) {
+            const dateInput = document.getElementById(`match-date-${fixtureId}`).value;
+            if (!dateInput) { alert("অনুগ্রহ করে ম্যাচের তারিখ সিলেক্ট করুন!"); return; }
+
+            // ১. স্কোয়াড এপ্রুভ করা
+            await db.from('squad_submissions').update({ status: 'Approved' }).eq('id', squadId);
+
+            // ২. চেক করা এই ম্যাচের জন্য ২টি টিমের স্কোয়াডই জমা হয়ে এপ্রুভড হয়েছে কিনা
+            const { data: allSquads } = await db.from('squad_submissions')
+                .select('*')
+                .eq('fixture_id', fixtureId)
+                .eq('status', 'Approved');
+
+            let updateData = { match_date: dateInput, status: 'Scheduled' };
+
+            // দুই টিমের স্কোয়াড পাওয়া গেলে র্যান্ডম ৫টি ১v১ তৈরি হবে
+            if (allSquads && allSquads.length === 2) {
+                let teamA_players = allSquads[0].player_list.split(',').map(p => p.trim());
+                let teamB_players = allSquads[1].player_list.split(',').map(p => p.trim());
+
+                // প্লেয়ারদের সাফেল / র্যান্ডমাইজ করা
+                teamB_players.sort(() => 0.5 - Math.random());
+
+                let randomMatches = [];
+                for (let i = 0; i < Math.min(teamA_players.length, teamB_players.length); i++) {
+                    randomMatches.push(`${teamA_players[i]} VS ${teamB_players[i]}`);
+                }
+
+                updateData.squad_matches = randomMatches.join(' | ');
+            }
+
+            await db.from('fixtures').update(updateData).eq('id', fixtureId);
+
+            loadAdminApprovals();
+            fetchFixtures();
+            alert("তারিখ ও অটো-র্যান্ডম ৫টি ১v১ ম্যাচ সফলভাবে তৈরি হয়েছে!");
         }
 
         async function approveResult(id, fixtureId) {
@@ -568,81 +617,46 @@
         }
 
         async function generateRandomFixtures() {
-        async function generateRandomFixtures() {
-    const startDate = document.getElementById('fixture-start-date').value;
-    if (!startDate) { alert("তারিখ নির্বাচন করুন!"); return; }
+            const { data: teams } = await db.from('teams').select('id');
+            if (!teams || teams.length < 2) { alert("কমপক্ষে ২টি টিম প্রয়োজন!"); return; }
 
-    const { data: teams } = await db.from('teams').select('id');
-    if (!teams || teams.length < 2) { alert("কমপক্ষে ২টি টিম প্রয়োজন!"); return; }
+            let teamList = [...teams].sort(() => 0.5 - Math.random());
+            let n = teamList.length;
+            if (n % 2 !== 0) { teamList.push({ id: null }); n++; }
 
-    // টিমগুলোকে র্যান্ডমাইজ করে নেওয়া
-    let teamList = [...teams].sort(() => 0.5 - Math.random());
-    
-    let n = teamList.length;
-    let isOdd = n % 2 !== 0;
-    if (isOdd) {
-        teamList.push({ id: null }); // বিজোড় টিম হলে ডামি প্লেয়ার
-        n++;
-    }
+            let rounds = n - 1;
+            let matchesPerRound = n / 2;
+            let leg1Matches = [];
 
-    let rounds = n - 1;
-    let matchesPerRound = n / 2;
-    let leg1Matches = [];
-
-    // Circle Algorithm দিয়ে সিকোয়েন্সিয়াল রাউন্ড জেনারেট (Leg 1 - 6 Matches)
-    for (let r = 0; r < rounds; r++) {
-        for (let m = 0; m < matchesPerRound; m++) {
-            let home = teamList[m];
-            let away = teamList[n - 1 - m];
-
-            if (home.id !== null && away.id !== null) {
-                leg1Matches.push({
-                    team_a_id: home.id,
-                    team_b_id: away.id
-                });
+            for (let r = 0; r < rounds; r++) {
+                for (let m = 0; m < matchesPerRound; m++) {
+                    let home = teamList[m];
+                    let away = teamList[n - 1 - m];
+                    if (home.id !== null && away.id !== null) {
+                        leg1Matches.push({ team_a_id: home.id, team_b_id: away.id });
+                    }
+                }
+                teamList.splice(1, 0, teamList.pop());
             }
+
+            let fixtures = [];
+            let matchdayCounter = 1;
+
+            // Leg 1 (6 Matches)
+            leg1Matches.forEach(m => {
+                fixtures.push({ matchday: matchdayCounter++, match_date: null, team_a_id: m.team_a_id, team_b_id: m.team_b_id, status: 'Open' });
+            });
+
+            // Leg 2 (6 Reverse Matches)
+            leg1Matches.forEach(m => {
+                fixtures.push({ matchday: matchdayCounter++, match_date: null, team_a_id: m.team_b_id, team_b_id: m.team_a_id, status: 'Open' });
+            });
+
+            await db.from('fixtures').delete().neq('id', 0);
+            await db.from('fixtures').insert(fixtures);
+            fetchFixtures();
+            alert(`১২টি ম্যাচের ডাবল রাউন্ড-রবিন ফিকশ্চার সফলভাবে জেনারেট হয়েছে! (তারিখ: TBD)`);
         }
-        // পজিশন রোটেট করা যেন টানা ম্যাচ না পড়ে
-        teamList.splice(1, 0, teamList.pop());
-    }
-
-    let fixtures = [];
-    let matchdayCounter = 1;
-
-    // ১ম লেগ যুক্ত করা (৬টি ম্যাচ)
-    leg1Matches.forEach(m => {
-        fixtures.push({
-            matchday: matchdayCounter++,
-            match_date: startDate,
-            team_a_id: m.team_a_id,
-            team_b_id: m.team_b_id,
-            status: 'Open'
-        });
-    });
-
-    // ২য় লেগ / রিটার্ন ম্যাচ যুক্ত করা (৬টি ম্যাচ)
-    leg1Matches.forEach(m => {
-        fixtures.push({
-            matchday: matchdayCounter++,
-            match_date: startDate,
-            team_a_id: m.team_b_id, // রিভার্স টিম
-            team_b_id: m.team_a_id,
-            status: 'Open'
-        });
-    });
-
-    // আগের ফিকশ্চার মুছে নতুন ১২টি ম্যাচ সেভ করা
-    await db.from('fixtures').delete().neq('id', 0);
-
-    const { error } = await db.from('fixtures').insert(fixtures);
-    if (error) {
-        alert("ফিকশ্চার তৈরিতে সমস্যা হয়েছে: " + error.message);
-    } else {
-        fetchFixtures();
-        alert(`অভিনন্দন! মোট ${fixtures.length}টি ম্যাচের নিখুঁত ডাবল রাউন্ড-রবিন ফিকশ্চার জেনারেট হয়েছে।`);
-    }
-}
-
 
         async function updateNotice() {
             const text = document.getElementById('admin-notice-input').value;
