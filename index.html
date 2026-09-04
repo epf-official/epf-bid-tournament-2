@@ -460,7 +460,8 @@
         }
 
         async function fetchFixtures() {
-            const { data: fixtures } = await db.from('fixtures').select('*');
+            // সিরিয়াল নম্বর অনুযায়ী সাজানোর জন্য order('matchday', { ascending: true }) যোগ করা হয়েছে
+            const { data: fixtures } = await db.from('fixtures').select('*').order('matchday', { ascending: true });
             const { data: teams } = await db.from('teams').select('*');
             const { data: results } = await db.from('match_results').select('*');
 
@@ -588,7 +589,7 @@
                 fixture_id: activeFixtureId,
                 team_id: loggedInCaptain.id,
                 player_list: squadList,
-                status: 'Pending'
+                status: 'Approved' // সরাসরি Approved হিসেবে সেভ হবে
             }]);
 
             if (error) { alert("স্কোয়াড সাবমিটে সমস্যা: " + error.message); return; }
@@ -642,7 +643,7 @@
 
             const { data: fixture } = await db.from('fixtures').select('*').eq('id', fixtureId).single();
             if (!fixture || !fixture.squad_matches) {
-                alert("এই ম্যাচের দুই দলের স্কোয়াড এখনো এপ্রুভ হয়নি!");
+                alert("এই ম্যাচের ১v১ ভার্সেস এখনো জেনারেট হয়নি! এডমিন প্যানেল থেকে স্কোয়াড আবার এপ্রুভ করুন।");
                 return;
             }
 
@@ -854,7 +855,6 @@
             } else { alert("ভুল পাসওয়ার্ড!"); }
         }
 
-        // সম্পূর্ণ নির্ভরযোগ্য অ্যাডমিন লোডার (কোনো রিলেশনশিপ এরর আসবে না)
         async function loadAdminApprovals() {
             const { data: allTeams } = await db.from('teams').select('id, team_name');
             const teamMap = {};
@@ -865,21 +865,27 @@
             if (allFixtures) allFixtures.forEach(f => fixMap[f.id] = f);
 
             // ১. পেন্ডিং স্কোয়াড
-            const { data: squads, error: sqErr } = await db.from('squad_submissions').select('*').eq('status', 'Pending');
+            const { data: squads, error: sqErr } = await db.from('squad_submissions').select('*');
             const sqContainer = document.getElementById('pending-squads-list');
+            
             if (sqErr) {
                 sqContainer.innerHTML = `<p style="color:var(--danger)">এরর: ${sqErr.message}</p>`;
             } else if (squads && squads.length > 0) {
-                sqContainer.innerHTML = squads.map(s => `
-                    <div class="approval-card">
-                        <div><strong>Match ${fixMap[s.fixture_id]?.matchday || s.fixture_id}:</strong> ${teamMap[s.team_id] || 'Team'}</div>
-                        <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
-                        <div style="margin-top:5px;">
-                            <input type="date" id="match-date-${s.fixture_id}">
+                let pendingSquads = squads.filter(s => s.status !== 'Approved' && s.status !== 'Super_Pending');
+                if(pendingSquads.length === 0) {
+                    sqContainer.innerHTML = '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
+                } else {
+                    sqContainer.innerHTML = pendingSquads.map(s => `
+                        <div class="approval-card">
+                            <div><strong>Match ${fixMap[s.fixture_id]?.matchday || s.fixture_id}:</strong> ${teamMap[s.team_id] || 'Team'}</div>
+                            <div><strong>স্কোয়াড:</strong> ${s.player_list}</div>
+                            <div style="margin-top:5px;">
+                                <input type="date" id="match-date-${s.fixture_id}">
+                            </div>
+                            <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">এপ্রুভ ও ১v১ ভার্সেস জেনারেট করুন</button>
                         </div>
-                        <button class="btn-action" style="background:var(--success); margin-top:5px;" onclick="approveSquadAndSetDate(${s.id}, ${s.fixture_id})">এপ্রুভ করুন</button>
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             } else {
                 sqContainer.innerHTML = '<p>কোনো স্কোয়াড পেন্ডিং নেই।</p>';
             }
@@ -950,19 +956,19 @@
         }
 
         async function approveSquadAndSetDate(squadId, fixtureId) {
-            const dateInput = document.getElementById(`match-date-${fixtureId}`).value;
-            if (!dateInput) { alert("অনুগ্রহ করে ম্যাচের তারিখ সিলেক্ট করুন!"); return; }
+            const dateInput = document.getElementById(`match-date-${fixtureId}`) ? document.getElementById(`match-date-${fixtureId}`).value : null;
 
             await db.from('squad_submissions').update({ status: 'Approved' }).eq('id', squadId);
 
+            // যেসকল স্কোয়াড জমা হয়েছে তা টেনে আনা
             const { data: allSquads } = await db.from('squad_submissions')
                 .select('*')
-                .eq('fixture_id', fixtureId)
-                .eq('status', 'Approved');
+                .eq('fixture_id', fixtureId);
 
-            let updateData = { match_date: dateInput, status: 'Scheduled' };
+            let updateData = { status: 'Scheduled' };
+            if (dateInput) updateData.match_date = dateInput;
 
-            if (allSquads && allSquads.length === 2) {
+            if (allSquads && allSquads.length >= 2) {
                 let teamA_players = allSquads[0].player_list.split(',').map(p => p.trim());
                 let teamB_players = allSquads[1].player_list.split(',').map(p => p.trim());
 
@@ -1002,7 +1008,6 @@
             const { data: superSquads } = await db.from('squad_submissions')
                 .select('*')
                 .eq('fixture_id', fixtureId)
-                .eq('status', 'Approved')
                 .like('player_list', '%[SUPER]%');
 
             if (superSquads && superSquads.length === 2) {
