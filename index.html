@@ -568,32 +568,81 @@
         }
 
         async function generateRandomFixtures() {
-            const startDate = document.getElementById('fixture-start-date').value;
-            if (!startDate) { alert("তারিখ নির্বাচন করুন!"); return; }
+        async function generateRandomFixtures() {
+    const startDate = document.getElementById('fixture-start-date').value;
+    if (!startDate) { alert("তারিখ নির্বাচন করুন!"); return; }
 
-            const { data: teams } = await db.from('teams').select('id');
-            if (!teams || teams.length < 2) { alert("কমপক্ষে ২টি টিম প্রয়োজন!"); return; }
+    const { data: teams } = await db.from('teams').select('id');
+    if (!teams || teams.length < 2) { alert("কমপক্ষে ২টি টিম প্রয়োজন!"); return; }
 
-            let shuffled = teams.sort(() => 0.5 - Math.random()); // Randomize
-            let fixtures = [];
-            let matchday = 1;
+    // টিমগুলোকে র্যান্ডমাইজ করে নেওয়া
+    let teamList = [...teams].sort(() => 0.5 - Math.random());
+    
+    let n = teamList.length;
+    let isOdd = n % 2 !== 0;
+    if (isOdd) {
+        teamList.push({ id: null }); // বিজোড় টিম হলে ডামি প্লেয়ার
+        n++;
+    }
 
-            for (let i = 0; i < shuffled.length; i++) {
-                for (let j = i + 1; j < shuffled.length; j++) {
-                    fixtures.push({
-                        matchday: matchday++,
-                        match_date: startDate,
-                        team_a_id: shuffled[i].id,
-                        team_b_id: shuffled[j].id,
-                        status: 'Open'
-                    });
-                }
+    let rounds = n - 1;
+    let matchesPerRound = n / 2;
+    let leg1Matches = [];
+
+    // Circle Algorithm দিয়ে সিকোয়েন্সিয়াল রাউন্ড জেনারেট (Leg 1 - 6 Matches)
+    for (let r = 0; r < rounds; r++) {
+        for (let m = 0; m < matchesPerRound; m++) {
+            let home = teamList[m];
+            let away = teamList[n - 1 - m];
+
+            if (home.id !== null && away.id !== null) {
+                leg1Matches.push({
+                    team_a_id: home.id,
+                    team_b_id: away.id
+                });
             }
-
-            await db.from('fixtures').insert(fixtures);
-            fetchFixtures();
-            alert("তারিখসহ র্যান্ডম ফিকশ্চার সফলভাবে জেনারেট করা হয়েছে!");
         }
+        // পজিশন রোটেট করা যেন টানা ম্যাচ না পড়ে
+        teamList.splice(1, 0, teamList.pop());
+    }
+
+    let fixtures = [];
+    let matchdayCounter = 1;
+
+    // ১ম লেগ যুক্ত করা (৬টি ম্যাচ)
+    leg1Matches.forEach(m => {
+        fixtures.push({
+            matchday: matchdayCounter++,
+            match_date: startDate,
+            team_a_id: m.team_a_id,
+            team_b_id: m.team_b_id,
+            status: 'Open'
+        });
+    });
+
+    // ২য় লেগ / রিটার্ন ম্যাচ যুক্ত করা (৬টি ম্যাচ)
+    leg1Matches.forEach(m => {
+        fixtures.push({
+            matchday: matchdayCounter++,
+            match_date: startDate,
+            team_a_id: m.team_b_id, // রিভার্স টিম
+            team_b_id: m.team_a_id,
+            status: 'Open'
+        });
+    });
+
+    // আগের ফিকশ্চার মুছে নতুন ১২টি ম্যাচ সেভ করা
+    await db.from('fixtures').delete().neq('id', 0);
+
+    const { error } = await db.from('fixtures').insert(fixtures);
+    if (error) {
+        alert("ফিকশ্চার তৈরিতে সমস্যা হয়েছে: " + error.message);
+    } else {
+        fetchFixtures();
+        alert(`অভিনন্দন! মোট ${fixtures.length}টি ম্যাচের নিখুঁত ডাবল রাউন্ড-রবিন ফিকশ্চার জেনারেট হয়েছে।`);
+    }
+}
+
 
         async function updateNotice() {
             const text = document.getElementById('admin-notice-input').value;
