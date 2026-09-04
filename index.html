@@ -440,36 +440,66 @@
             `).join('');
         }
 
-        async function openSquadModal(fixtureId, teamAId, teamBId) {
-            if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
-            if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
-                alert("আপনি এই ম্যাচের অংশ নন!"); return;
+        // ১. স্কোয়াড মোডাল (ক্যাপ্টেনসহ টিমের সবাইকে ড্রপডাউনে আলাদা আলাদাভাবে দেখাবে)
+async function openSquadModal(fixtureId, teamAId, teamBId) {
+    if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
+    if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
+        alert("আপনি এই ম্যাচের অংশ নন!"); return;
+    }
+
+    activeFixtureId = fixtureId;
+    const { data: players } = await db.from('players').select('*').eq('team_id', loggedInCaptain.id);
+
+    // ক্যাপ্টেনের নাম ও টিমের সকল প্লেয়ারদের একটি লিস্টে আনা
+    let allPlayerList = [loggedInCaptain.captain_name];
+    
+    if (players) {
+        players.forEach(p => {
+            if (p.player_name.trim().toLowerCase() !== loggedInCaptain.captain_name.trim().toLowerCase()) {
+                allPlayerList.push(p.player_name);
             }
+        });
+    }
 
-            activeFixtureId = fixtureId;
-            const { data: players } = await db.from('players').select('*').eq('team_id', loggedInCaptain.id);
-            const selectors = document.querySelectorAll('.squad-select');
-            selectors.forEach(s => {
-                s.innerHTML = players ? players.map(p => `<option value="${p.player_name}">${p.player_name}</option>`).join('') : '';
-            });
-
-            document.getElementById('squadModal').style.display = 'flex';
+    const selectors = document.querySelectorAll('.squad-select');
+    selectors.forEach((s, index) => {
+        // ড্রপডাউনে সকলের নাম দেখাবে
+        s.innerHTML = allPlayerList.map(p => `<option value="${p}">${p}</option>`).join('');
+        
+        // ৫টি ড্রপডাউনে শুরুতেই যেন অটোমেটিক ৫ জন আলাদা প্লেয়ারের নাম সিলেক্ট হয়ে থাকে
+        if (allPlayerList[index]) {
+            s.selectedIndex = index;
         }
+    });
 
-        async function submitSquad() {
-            const selects = document.querySelectorAll('.squad-select');
-            const squadList = Array.from(selects).map(s => s.value).join(', ');
+    document.getElementById('squadModal').style.display = 'flex';
+}
 
-            await db.from('squad_submissions').insert([{
-                fixture_id: activeFixtureId,
-                team_id: loggedInCaptain.id,
-                player_list: squadList,
-                status: 'Pending'
-            }]);
+// ২. স্কোয়াড সাবমিট ফাংশন (ডুপ্লিকেট প্লেয়ার চেকসহ)
+async function submitSquad() {
+    const selects = document.querySelectorAll('.squad-select');
+    const selectedPlayers = Array.from(selects).map(s => s.value);
 
-            closeModals();
-            alert("স্কোয়াড সাবমিট করা হয়েছে! এডমিন তারিখ সেট করে এপ্রুভ করবেন।");
-        }
+    // ১. একই প্লেয়ার একাধিকবার সিলেক্ট করা হয়েছে কিনা তা চেক করা
+    const uniquePlayers = new Set(selectedPlayers);
+    if (uniquePlayers.size < selectedPlayers.length) {
+        alert("ভুল হয়েছে! একই প্লেয়ারকে একাধিকবার সিলেক্ট করা যাবে না। ৫ জন আলাদা প্লেয়ার বেছে নিন।");
+        return;
+    }
+
+    const squadList = selectedPlayers.join(', ');
+
+    await db.from('squad_submissions').insert([{
+        fixture_id: activeFixtureId,
+        team_id: loggedInCaptain.id,
+        player_list: squadList,
+        status: 'Pending'
+    }]);
+
+    closeModals();
+    alert("৫ জনের স্কোয়াড সফলভাবে সাবমিট করা হয়েছে!");
+}
+
 
         function openResultModal(fixtureId, teamAName, teamBName) {
             if (!loggedInCaptain) { alert("প্রথমে 'Captain Login' করে আসুন!"); return; }
