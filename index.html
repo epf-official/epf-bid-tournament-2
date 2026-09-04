@@ -1,1 +1,658 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPF BID Tournament - 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-950 text-white font-sans min-h-screen">
 
+  <!-- Header Banner -->
+  <header class="bg-gradient-to-r from-amber-600 via-purple-700 to-indigo-900 p-6 text-center shadow-lg border-b border-amber-500/30">
+    <h1 class="text-3xl md:text-5xl font-extrabold tracking-wider text-amber-300 drop-shadow-md">
+      EPF LEAGUE: BID TOURNAMENT - 2
+    </h1>
+    <p class="text-sm md:text-base text-gray-200 mt-2 font-medium">Official E-Football Championship</p>
+  </header>
+
+  <!-- Live Notice Board -->
+  <div class="bg-gray-900 border-y border-gray-800 py-2 px-4 flex items-center overflow-hidden">
+    <span class="bg-red-600 text-xs uppercase font-bold px-3 py-1 rounded-full mr-3 animate-pulse shrink-0">Notice</span>
+    <marquee id="notice-text" class="text-sm text-amber-200">টুর্নামেন্টে সবাইকে স্বাগতম! নিয়মিত নোটিশ ও আপডেট দেখতে এখানে চোখ রাখুন।</marquee>
+  </div>
+
+  <!-- Navigation Grid -->
+  <div class="max-w-5xl mx-auto p-4 my-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <button onclick="switchTab('teams')" class="bg-gray-900 hover:bg-amber-600 border border-amber-500/20 text-amber-400 hover:text-white p-4 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-md">
+        <i class="fa-solid fa-shield-halved text-2xl"></i> Teams & Players
+      </button>
+      <button onclick="switchTab('fixtures')" class="bg-gray-900 hover:bg-amber-600 border border-amber-500/20 text-amber-400 hover:text-white p-4 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-md">
+        <i class="fa-solid fa-calendar-days text-2xl"></i> Fixtures
+      </button>
+      <button onclick="switchTab('result-submit')" class="bg-gray-900 hover:bg-amber-600 border border-amber-500/20 text-amber-400 hover:text-white p-4 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-md">
+        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i> Result Submit
+      </button>
+      <button onclick="switchTab('points')" class="bg-gray-900 hover:bg-amber-600 border border-amber-500/20 text-amber-400 hover:text-white p-4 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-md">
+        <i class="fa-solid fa-trophy text-2xl"></i> Points Table
+      </button>
+      <button onclick="switchTab('rules')" class="bg-gray-900 hover:bg-amber-600 border border-amber-500/20 text-amber-400 hover:text-white p-4 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-md col-span-2 md:col-span-1">
+        <i class="fa-solid fa-book-bookmark text-2xl"></i> Rules
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="max-w-5xl mx-auto p-4 mb-24">
+
+    <!-- 1. Teams & Players Section -->
+    <section id="sec-teams" class="tab-content">
+      <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-users"></i> Participating Teams</h2>
+      <div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="text-gray-400 animate-pulse">ডাটাবেজ থেকে টিমের তথ্য লোড হচ্ছে...</div>
+      </div>
+    </section>
+
+    <!-- 2. Fixtures Section -->
+    <section id="sec-fixtures" class="tab-content hidden">
+      <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-calendar-check"></i> Tournament Fixtures</h2>
+      <div id="fixtures-container" class="space-y-4">
+        <div class="text-gray-400 animate-pulse">ফিক্সচার লোড হচ্ছে...</div>
+      </div>
+    </section>
+
+    <!-- 3. Result Submit Section -->
+    <section id="sec-result-submit" class="tab-content hidden">
+      <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+        <h2 class="text-2xl font-bold text-amber-400"><i class="fa-solid fa-gamepad"></i> Active Matchday Result Submission</h2>
+      </div>
+      <div id="active-match-submit" class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+        <p class="text-gray-400 text-center py-8">বর্তমানে কোনো একটিভ ম্যাচ ডে-র রেজাল্ট সাবমিশন খোলা নেই। এডমিন এপ্রুভ করলে এখানে শো করবে।</p>
+      </div>
+    </section>
+
+    <!-- 4. Points Table Section -->
+    <section id="sec-points" class="tab-content hidden">
+      <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-list-ol"></i> Points Table</h2>
+      <div class="overflow-x-auto bg-gray-900 rounded-xl border border-gray-800">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-800 text-amber-400 uppercase text-xs">
+            <tr>
+              <th class="p-3">Team Name</th>
+              <th class="p-3 text-center">MP</th>
+              <th class="p-3 text-center">W</th>
+              <th class="p-3 text-center">D</th>
+              <th class="p-3 text-center">L</th>
+              <th class="p-3 text-center">GD</th>
+              <th class="p-3 text-center">PTS</th>
+            </tr>
+          </thead>
+          <tbody id="points-body" class="divide-y divide-gray-800">
+            <!-- Points Rows Auto Generated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. Rules Section -->
+    <section id="sec-rules" class="tab-content hidden">
+      <h2 class="text-2xl font-bold text-amber-400 mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-scroll"></i> Tournament Guidelines</h2>
+      <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-gray-300 space-y-3 leading-relaxed">
+        <p>১. প্রতি ম্যাচে **৫v৫** সিস্টেমে খেলা হবে।</p>
+        <p>২. ম্যাচের আগে ক্যাপ্টেনদের পিন কোড দিয়ে **Squad Submit** করতে হবে।</p>
+        <p>৩. ম্যাচ শেষ হলে সরাসরি মোবাইল বা পিসির গ্যালারি থেকে ই-ফুটবলের স্ক্রিনশট আপলোড করে পয়েন্ট ইনপুট দিতে হবে।</p>
+        <p>৪. অ্যাডমিন রেজাল্ট এবং স্ক্রিনশট ভেরিফাই করে এপ্রুভ করলে তা পয়েন্ট টেবিলে যুক্ত হবে।</p>
+        <p>৫. ৫টি ম্যাচ শেষে সামগ্রিক পয়েন্ট সমান হলে স্বয়ংক্রিয়ভাবে **Super Match** অনুষ্ঠিত হবে।</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Control Portals (Bottom Floating Buttons) -->
+  <div class="fixed bottom-4 right-4 flex gap-2 z-40">
+    <button onclick="openModal('captain-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-full shadow-xl text-sm flex items-center gap-2">
+      <i class="fa-solid fa-key"></i> Captain Portal
+    </button>
+    <button onclick="openModal('admin-modal')" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-full shadow-xl text-sm flex items-center gap-2">
+      <i class="fa-solid fa-user-shield"></i> Admin Panel
+    </button>
+  </div>
+
+  <!-- Captain Squad Submission Modal -->
+  <div id="captain-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('captain-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+      <h3 class="text-xl font-bold text-indigo-400 mb-4"><i class="fa-solid fa-users-gear"></i> Captain Squad Submission</h3>
+      
+      <div id="capt-login-step" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Select Your Team</label>
+          <select id="capt-team-select" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2.5 text-white"></select>
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Team PIN</label>
+          <input type="password" id="capt-pin" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2.5 text-white" placeholder="Enter 4-digit PIN">
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-300">Select Matchday</label>
+          <select id="capt-matchday-select" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2.5 text-white"></select>
+        </div>
+        <button onclick="verifyCaptainPIN()" class="w-full bg-indigo-600 hover:bg-indigo-700 font-bold py-2.5 rounded-lg text-white">Login & Load Players</button>
+      </div>
+
+      <div id="capt-squad-step" class="hidden space-y-4 mt-4">
+        <p class="text-xs text-amber-400">এই ম্যাচের জন্য আপনার টিম থেকে ৫ জন প্লেয়ার নির্বাচন করুন:</p>
+        <div id="squad-dropdowns-container" class="space-y-2"></div>
+        <button onclick="submitCaptainSquad()" class="w-full bg-green-600 hover:bg-green-700 font-bold py-2.5 rounded-lg text-white">Submit Squad to Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel Modal -->
+  <div id="admin-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('admin-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+      <h3 class="text-xl font-bold text-red-500 mb-4"><i class="fa-solid fa-lock"></i> Admin Dashboard</h3>
+      
+      <div id="admin-login-step" class="space-y-4">
+        <input type="password" id="admin-pass" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2.5 text-white" placeholder="Enter Admin Password">
+        <button onclick="loginAdmin()" class="w-full bg-red-600 hover:bg-red-700 font-bold py-2.5 rounded-lg text-white">Unlock Panel</button>
+      </div>
+
+      <div id="admin-dashboard-step" class="hidden space-y-6">
+        <!-- Notice Update -->
+        <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700 space-y-2">
+          <h4 class="font-bold text-amber-400 text-sm">Update Scrolling Notice</h4>
+          <div class="flex gap-2">
+            <input type="text" id="admin-notice-input" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-sm text-white" placeholder="Write new notice...">
+            <button onclick="updateNotice()" class="bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-lg font-bold text-xs">Publish</button>
+          </div>
+        </div>
+
+        <!-- Squad Approvals & Fixture Activation -->
+        <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700 space-y-3">
+          <h4 class="font-bold text-amber-400 text-sm">Approve Squads & Activate Matchday</h4>
+          <div id="admin-squad-approvals" class="space-y-2 text-xs text-gray-300">
+            <!-- Dynamic Squad Approvals -->
+          </div>
+        </div>
+
+        <!-- Result Verification -->
+        <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700 space-y-3">
+          <h4 class="font-bold text-amber-400 text-sm">Verify Pending Results & Screenshots</h4>
+          <div id="admin-result-approvals" class="space-y-2 text-xs text-gray-300">
+            <!-- Dynamic Results Verification -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // SUPABASE CONNECTION SETUP (আপনার ক্রিডেনশিয়ালস দিন)
+    // -------------------------------------------------------------
+    const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentLoggedInTeam = null;
+    let selectedFixtureId = null;
+
+    // Tab Switcher Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+    }
+
+    function openModal(id) { 
+      document.getElementById(id).classList.remove('hidden'); 
+      document.getElementById(id).classList.add('flex'); 
+    }
+    function closeModal(id) { 
+      document.getElementById(id).classList.add('hidden'); 
+      document.getElementById(id).classList.remove('flex'); 
+    }
+
+    // -------------------------------------------------------------
+    // DATA FETCHING & RENDERING
+    // -------------------------------------------------------------
+    async function init() {
+      await fetchNotice();
+      await fetchTeams();
+      await fetchFixtures();
+      await fetchActiveResultSubmit();
+      await calculatePointsTable();
+    }
+
+    async function fetchNotice() {
+      const { data } = await _supabase.from('notices').select('*').order('created_at', { ascending: false }).limit(1);
+      if(data && data.length > 0) {
+        document.getElementById('notice-text').innerText = data[0].notice_text;
+      }
+    }
+
+    async function fetchTeams() {
+      const { data: teams } = await _supabase.from('teams').select('*, players(*)');
+      const container = document.getElementById('teams-container');
+      const captSelect = document.getElementById('capt-team-select');
+
+      if (!teams || teams.length === 0) {
+        container.innerHTML = `<p class="text-gray-400">কোনো টিমের তথ্য পাওয়া যায়নি।</p>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      captSelect.innerHTML = '';
+
+      teams.forEach(team => {
+        captSelect.innerHTML += `<option value="${team.id}">${team.team_name}</option>`;
+
+        let playersListHTML = team.players && team.players.length > 0 
+          ? team.players.map((p, idx) => `<li class="text-xs text-gray-300 py-0.5 border-b border-gray-800/50">${idx+1}. ${p.player_name}</li>`).join('')
+          : '<li class="text-xs text-gray-500">কোনো প্লেয়ার যোগ করা হয়নি</li>';
+
+        container.innerHTML += `
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex gap-4 items-start shadow-md hover:border-amber-500/30 transition">
+            <img src="${team.logo_url || 'https://via.placeholder.com/80'}" class="w-16 h-16 rounded-xl object-cover border border-amber-500/20 shrink-0">
+            <div class="w-full">
+              <h3 class="font-bold text-lg text-amber-300">${team.team_name}</h3>
+              <p class="text-xs text-indigo-400 font-semibold mb-2"><i class="fa-solid fa-crown text-amber-400"></i> Captain: ${team.captain_name}</p>
+              <p class="text-xs text-gray-400 font-bold mb-1">Squad Members:</p>
+              <ul class="grid grid-cols-2 gap-x-2">${playersListHTML}</ul>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function fetchFixtures() {
+      const { data: fixtures } = await _supabase
+        .from('fixtures')
+        .select('*, team_a:teams!team_a_id(team_name, logo_url), team_b:teams!team_b_id(team_name, logo_url)')
+        .order('matchday', { ascending: true });
+
+      const container = document.getElementById('fixtures-container');
+      const matchdaySelect = document.getElementById('capt-matchday-select');
+
+      if (!fixtures || fixtures.length === 0) {
+        container.innerHTML = `<p class="text-gray-400">এখনো কোনো ফিক্সচার তৈরি করা হয়নি।</p>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      matchdaySelect.innerHTML = '';
+
+      fixtures.forEach(fix => {
+        matchdaySelect.innerHTML += `<option value="${fix.id}">Matchday ${fix.matchday}: ${fix.team_a.team_name} vs ${fix.team_b.team_name}</option>`;
+
+        let statusBadge = `<span class="bg-gray-800 text-gray-400 text-xs font-bold px-2.5 py-1 rounded-full">Draft</span>`;
+        if (fix.status === 'squad_submitted') statusBadge = `<span class="bg-amber-600/20 text-amber-400 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-500/30">Squad Submitted</span>`;
+        if (fix.status === 'active') statusBadge = `<span class="bg-green-600/20 text-green-400 text-xs font-bold px-2.5 py-1 rounded-full border border-green-500/30 animate-pulse">Live / Active</span>`;
+        if (fix.status === 'completed') statusBadge = `<span class="bg-blue-600/20 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-500/30">Completed</span>`;
+
+        container.innerHTML += `
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Matchday ${fix.matchday}</span>
+              ${statusBadge}
+            </div>
+            <div class="flex justify-between items-center py-2 px-4 bg-gray-950 rounded-lg border border-gray-800/80">
+              <div class="flex items-center gap-2 w-2/5">
+                <img src="${fix.team_a.logo_url || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full object-cover">
+                <span class="font-bold text-sm truncate">${fix.team_a.team_name}</span>
+              </div>
+              <span class="text-amber-500 font-extrabold text-sm">VS</span>
+              <div class="flex items-center gap-2 justify-end w-2/5 text-right">
+                <span class="font-bold text-sm truncate">${fix.team_b.team_name}</span>
+                <img src="${fix.team_b.logo_url || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full object-cover">
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // -------------------------------------------------------------
+    // RESULT SUBMISSION & LIVE 1v1 MATCHES
+    // -------------------------------------------------------------
+    async function fetchActiveResultSubmit() {
+      const container = document.getElementById('active-match-submit');
+
+      const { data: activeFixtures } = await _supabase
+        .from('fixtures')
+        .select('*, team_a:teams!team_a_id(*, players(*)), team_b:teams!team_b_id(*, players(*))')
+        .eq('status', 'active')
+        .limit(1);
+
+      if (!activeFixtures || activeFixtures.length === 0) {
+        container.innerHTML = `<p class="text-gray-400 text-center py-8">বর্তমানে কোনো একটিভ ম্যাচ ডে-র রেজাল্ট সাবমিশন খোলা নেই।</p>`;
+        return;
+      }
+
+      const fix = activeFixtures[0];
+      
+      // Fetch Squad Submissions
+      const { data: squads } = await _supabase.from('squad_submissions').select('*').eq('fixture_id', fix.id);
+      
+      let teamAPlayers = fix.team_a.players || [];
+      let teamBPlayers = fix.team_b.players || [];
+
+      // Filter only submitted squad players if available
+      const squadA = squads ? squads.find(s => s.team_id === fix.team_a_id) : null;
+      const squadB = squads ? squads.find(s => s.team_id === fix.team_b_id) : null;
+
+      if(squadA) teamAPlayers = teamAPlayers.filter(p => squadA.player_ids.includes(p.id));
+      if(squadB) teamBPlayers = teamBPlayers.filter(p => squadB.player_ids.includes(p.id));
+
+      let rowsHTML = '';
+      for(let i = 1; i <= 5; i++) {
+        let optionsA = teamAPlayers.map(p => `<option value="${p.id}">${p.player_name}</option>`).join('');
+        let optionsB = teamBPlayers.map(p => `<option value="${p.id}">${p.player_name}</option>`).join('');
+
+        rowsHTML += `
+          <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-3">
+            <span class="text-xs font-bold text-amber-400 w-16">Match ${i}</span>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+              <select id="m${i}-p1" class="bg-gray-800 border border-gray-700 text-xs rounded p-2 text-white w-full md:w-40">${optionsA}</select>
+              <input type="number" id="m${i}-s1" min="0" value="0" class="w-12 bg-gray-800 border border-gray-700 text-center text-sm font-bold rounded p-1 text-amber-300">
+            </div>
+            <span class="text-xs font-extrabold text-gray-500">VS</span>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+              <input type="number" id="m${i}-s2" min="0" value="0" class="w-12 bg-gray-800 border border-gray-700 text-center text-sm font-bold rounded p-1 text-amber-300">
+              <select id="m${i}-p2" class="bg-gray-800 border border-gray-700 text-xs rounded p-2 text-white w-full md:w-40">${optionsB}</select>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+            <h3 class="font-bold text-lg text-amber-300">Matchday ${fix.matchday}: ${fix.team_a.team_name} vs ${fix.team_b.team_name}</h3>
+            <span class="text-xs bg-green-500/20 text-green-400 font-bold px-3 py-1 rounded-full border border-green-500/30 animate-pulse">Live</span>
+          </div>
+
+          <div class="space-y-2">${rowsHTML}</div>
+
+          <!-- Image Upload From Gallery -->
+          <div class="bg-gray-950 p-4 rounded-lg border border-gray-800 space-y-2">
+            <label class="block text-xs font-bold text-gray-300">Upload eFootball Screenshot (Gallery)</label>
+            <input type="file" id="result-screenshot-file" accept="image/*" onchange="previewImage(event)" class="text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+            <div id="image-preview-box" class="hidden mt-2">
+              <img id="preview-img" src="" class="w-40 h-24 object-cover rounded-lg border border-amber-500/30">
+            </div>
+          </div>
+
+          <button onclick="submitMatchResults(${fix.id})" class="w-full bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-700 hover:to-indigo-700 font-bold py-3 rounded-xl text-white shadow-lg transition">
+            Submit Results & Screenshot for Approval
+          </button>
+        </div>
+      `;
+    }
+
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('preview-img').src = e.target.result;
+          document.getElementById('image-preview-box').classList.remove('hidden');
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function submitMatchResults(fixtureId) {
+      const fileInput = document.getElementById('result-screenshot-file');
+      if (fileInput.files.length === 0) {
+        alert("দয়া করে ই-ফুটবল ম্যাচের স্ক্রিনশট আপলোড করুন!");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const fileName = `screenshot_${fixtureId}_${Date.now()}.${file.name.split('.').pop()}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await _supabase.storage
+        .from('match-screenshots')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        alert("ইমেজ আপলোড ব্যর্থ হয়েছে: " + uploadError.message);
+        return;
+      }
+
+      const screenshotUrl = `${SUPABASE_URL}/storage/v1/object/public/match-screenshots/${fileName}`;
+
+      // Prepare 5 matches data
+      for (let i = 1; i <= 5; i++) {
+        const p1 = document.getElementById(`m${i}-p1`).value;
+        const s1 = parseInt(document.getElementById(`m${i}-s1`).value) || 0;
+        const s2 = parseInt(document.getElementById(`m${i}-s2`).value) || 0;
+        const p2 = document.getElementById(`m${i}-p2`).value;
+
+        await _supabase.from('match_results').insert({
+          fixture_id: fixtureId,
+          match_no: i,
+          player_a_id: p1,
+          player_b_id: p2,
+          score_a: s1,
+          score_b: s2,
+          screenshot_url: screenshotUrl,
+          is_approved: false
+        });
+      }
+
+      alert("রেজাল্ট সফলভাবে সাবমিট হয়েছে! অ্যাডমিন ভেরিফাই করে এপ্রুভ করবেন।");
+      fetchActiveResultSubmit();
+    }
+
+    // -------------------------------------------------------------
+    // CAPTAIN PORTAL & SQUAD SUBMISSION
+    // -------------------------------------------------------------
+    async function verifyCaptainPIN() {
+      const teamId = document.getElementById('capt-team-select').value;
+      const pin = document.getElementById('capt-pin').value;
+      selectedFixtureId = document.getElementById('capt-matchday-select').value;
+
+      const { data: team } = await _supabase.from('teams').select('*, players(*)').eq('id', teamId).single();
+
+      if (team && team.pin_code === pin) {
+        currentLoggedInTeam = team;
+        document.getElementById('capt-login-step').classList.add('hidden');
+        document.getElementById('capt-squad-step').classList.remove('hidden');
+
+        // Render 5 dropdowns for selecting squad
+        const container = document.getElementById('squad-dropdowns-container');
+        container.innerHTML = '';
+
+        for (let i = 1; i <= 5; i++) {
+          let options = team.players.map(p => `<option value="${p.id}">${p.player_name}</option>`).join('');
+          container.innerHTML += `
+            <div>
+              <label class="block text-xs text-gray-400">Player ${i}</label>
+              <select id="squad-p${i}" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-xs text-white">${options}</select>
+            </div>
+          `;
+        }
+      } else {
+        alert("ভুল পিন কোড! সঠিক পিন দিয়ে আবার চেষ্টা করুন।");
+      }
+    }
+
+    async function submitCaptainSquad() {
+      const selectedPlayerIds = [];
+      for (let i = 1; i <= 5; i++) {
+        selectedPlayerIds.push(parseInt(document.getElementById(`squad-p${i}`).value));
+      }
+
+      await _supabase.from('squad_submissions').insert({
+        fixture_id: selectedFixtureId,
+        team_id: currentLoggedInTeam.id,
+        player_ids: selectedPlayerIds
+      });
+
+      // Update fixture status
+      await _supabase.from('fixtures').update({ status: 'squad_submitted' }).eq('id', selectedFixtureId);
+
+      alert("আপনার টিমের ৫ জনের স্কোয়াড সফলভাবে এডমিনের কাছে জমা হয়েছে!");
+      closeModal('captain-modal');
+      fetchFixtures();
+    }
+
+    // -------------------------------------------------------------
+    // AUTOMATIC POINTS TABLE LOGIC
+    // -------------------------------------------------------------
+    async function calculatePointsTable() {
+      const { data: teams } = await _supabase.from('teams').select('*');
+      const { data: results } = await _supabase.from('match_results').select('*, fixture:fixtures(*)').eq('is_approved', true);
+
+      if(!teams) return;
+
+      const tableData = teams.map(t => ({
+        id: t.id,
+        name: t.team_name,
+        mp: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0
+      }));
+
+      if (results) {
+        results.forEach(res => {
+          const teamA = tableData.find(t => t.id === res.fixture.team_a_id);
+          const teamB = tableData.find(t => t.id === res.fixture.team_b_id);
+
+          if (teamA && teamB) {
+            teamA.mp += 1;
+            teamB.mp += 1;
+            teamA.gd += (res.score_a - res.score_b);
+            teamB.gd += (res.score_b - res.score_a);
+
+            if (res.score_a > res.score_b) {
+              teamA.w += 1; teamA.pts += 3;
+              teamB.l += 1;
+            } else if (res.score_b > res.score_a) {
+              teamB.w += 1; teamB.pts += 3;
+              teamA.l += 1;
+            } else {
+              teamA.d += 1; teamA.pts += 1;
+              teamB.d += 1; teamB.pts += 1;
+            }
+          }
+        });
+      }
+
+      // Sort by Points, then Goal Difference
+      tableData.sort((a, b) => b.pts - a.pts || b.gd - a.gd);
+
+      const tbody = document.getElementById('points-body');
+      tbody.innerHTML = '';
+
+      tableData.forEach((row, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-800/50 transition">
+            <td class="p-3 font-bold text-amber-300 flex items-center gap-2">
+              <span class="text-xs text-gray-500">${idx+1}.</span> ${row.name}
+            </td>
+            <td class="p-3 text-center font-semibold">${row.mp}</td>
+            <td class="p-3 text-center text-green-400 font-semibold">${row.w}</td>
+            <td class="p-3 text-center text-amber-400 font-semibold">${row.d}</td>
+            <td class="p-3 text-center text-red-400 font-semibold">${row.l}</td>
+            <td class="p-3 text-center font-semibold">${row.gd > 0 ? '+'+row.gd : row.gd}</td>
+            <td class="p-3 text-center font-extrabold text-amber-400">${row.pts}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // -------------------------------------------------------------
+    // ADMIN DASHBOARD LOGIC
+    // -------------------------------------------------------------
+    function loginAdmin() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === "1234") { // আপনার ইচ্ছামতো এডমিন পাসওয়ার্ড চেঞ্জ করে নিন
+        document.getElementById('admin-login-step').classList.add('hidden');
+        document.getElementById('admin-dashboard-step').classList.remove('hidden');
+        loadAdminData();
+      } else {
+        alert("ভুল পাসওয়ার্ড!");
+      }
+    }
+
+    async function loadAdminData() {
+      // Load pending squad submissions
+      const { data: fixtures } = await _supabase.from('fixtures').select('*, team_a:teams!team_a_id(*), team_b:teams!team_b_id(*)').eq('status', 'squad_submitted');
+      const squadContainer = document.getElementById('admin-squad-approvals');
+      squadContainer.innerHTML = '';
+
+      if(fixtures && fixtures.length > 0) {
+        fixtures.forEach(fix => {
+          squadContainer.innerHTML += `
+            <div class="flex justify-between items-center bg-gray-900 p-2 rounded border border-gray-700">
+              <span>Matchday ${fix.matchday}: ${fix.team_a.team_name} vs ${fix.team_b.team_name}</span>
+              <button onclick="approveFixtureActive(${fix.id})" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white font-bold">Activate Matchday</button>
+            </div>
+          `;
+        });
+      } else {
+        squadContainer.innerHTML = `<p class="text-gray-500">কোনো পেন্ডিং স্কোয়াড সাবমিশন নেই।</p>`;
+      }
+
+      // Load pending result approvals
+      const { data: results } = await _supabase.from('match_results').select('*, fixture:fixtures(*)').eq('is_approved', false);
+      const resContainer = document.getElementById('admin-result-approvals');
+      resContainer.innerHTML = '';
+
+      if(results && results.length > 0) {
+        const fixtureIds = [...new Set(results.map(r => r.fixture_id))];
+        fixtureIds.forEach(fId => {
+          const sample = results.find(r => r.fixture_id === fId);
+          resContainer.innerHTML += `
+            <div class="bg-gray-900 p-3 rounded border border-gray-700 space-y-2">
+              <div class="flex justify-between items-center">
+                <span>Fixture #${fId} Submitted Results</span>
+                <a href="${sample.screenshot_url}" target="_blank" class="text-indigo-400 underline">View Screenshot</a>
+              </div>
+              <button onclick="approveResults(${fId})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 rounded">Approve & Publish Scores</button>
+            </div>
+          `;
+        });
+      } else {
+        resContainer.innerHTML = `<p class="text-gray-500">কোনো পেন্ডিং রেজাল্ট নেই।</p>`;
+      }
+    }
+
+    async function approveFixtureActive(fixtureId) {
+      await _supabase.from('fixtures').update({ status: 'active' }).eq('id', fixtureId);
+      alert("ম্যাচ ডে লাইভ/একটিভ করা হয়েছে!");
+      loadAdminData();
+      fetchFixtures();
+      fetchActiveResultSubmit();
+    }
+
+    async function approveResults(fixtureId) {
+      await _supabase.from('match_results').update({ is_approved: true }).eq('fixture_id', fixtureId);
+      await _supabase.from('fixtures').update({ status: 'completed' }).eq('id', fixtureId);
+
+      alert("রেজাল্ট এপ্রুভ হয়েছে এবং পয়েন্ট টেবিল আপডেট করা হয়েছে!");
+      loadAdminData();
+      fetchActiveResultSubmit();
+      calculatePointsTable();
+      fetchFixtures();
+    }
+
+    async function updateNotice() {
+      const text = document.getElementById('admin-notice-input').value;
+      if(!text) return;
+      await _supabase.from('notices').insert({ notice_text: text });
+      alert("নোটিশ আপডেট করা হয়েছে!");
+      fetchNotice();
+    }
+
+    // App Initialization
+    window.onload = init;
+  </script>
+</body>
+</html>
