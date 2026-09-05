@@ -194,6 +194,12 @@ async function openSquadModal(fixtureId, teamAId, teamBId) {
 
     const selectors = document.querySelectorAll('.squad-select');
     selectors.forEach((s, index) => {
+            const { data: fx } = await db.from('fixtures').select('status').eq('id', fixtureId).single();
+    if (fx && fx.status !== 'Open') {
+        alert("এই ম্যাচের স্কোয়াড লক হয়ে গেছে!");
+        return;
+    }
+        
         s.innerHTML = allPlayerList.map(p => `<option value="${p}">${p}</option>`).join('');
         if (allPlayerList[index]) s.selectedIndex = index;
     });
@@ -202,6 +208,13 @@ async function openSquadModal(fixtureId, teamAId, teamBId) {
 }
 
 async function submitSquad() {
+        // সিকিউরিটি চেক: ম্যাচ Open না থাকলে ডাটাবেজে সাবমিট হবে না
+    const { data: fx } = await db.from('fixtures').select('status').eq('id', activeFixtureId).single();
+    if (fx && fx.status !== 'Open') {
+        alert("এই ম্যাচের স্কোয়াড ইতোমধ্যে লক হয়ে গেছে! নতুন করে জমা দেওয়া যাবে না।");
+        return;
+    }
+    
     const selects = document.querySelectorAll('.squad-select');
     const selectedPlayers = Array.from(selects).map(s => s.value);
 
