@@ -129,10 +129,20 @@ async function fetchFixtures() {
             `;
         }
 
-        let actionBtn = `<button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Squad Submit</button>`;
-        if (f.status === 'Super Match Needed') {
-            actionBtn = `<button class="btn-action btn-super" onclick="openSuperSquadModal(${f.id}, ${f.team_a_id}, ${f.team_b_id})">Super Player Select</button>`;
-        }
+        let actionBtn = '';
+
+if (f.status === 'Open') {
+    actionBtn = `<button class="btn-action" onclick="openSquadModal(${f.id}, ${f.team_a_id},${f.team_b_id})">Squad Submit</button>`;
+} else if (f.status === 'Scheduled') {
+    actionBtn = `<span style="color:var(--cyan); font-weight:bold; border:1px solid var(--cyan); padding:4px 8px; border-radius:4px;">✔ Squad Locked</span>`;
+} else if (f.status === 'Pending Approval') {
+    actionBtn = `<span style="color:#f39c12; font-weight:bold;">⏳ Pending Approval</span>`;
+} else if (f.status === 'Super Match Needed') {
+    actionBtn = `<button class="btn-action btn-super" onclick="openSuperSquadModal(${f.id}, ${f.team_a_id},${f.team_b_id})">Super Player Select</button>`;
+} else if (f.status === 'Completed') {
+    actionBtn = `<span style="color:var(--gold); font-weight:bold;">✔ Match Finished</span>`;
+}
+
 
         return `
             <div class="fixture-card">
@@ -179,6 +189,11 @@ async function openSquadModal(fixtureId, teamAId, teamBId) {
     if (loggedInCaptain.id !== teamAId && loggedInCaptain.id !== teamBId) {
         alert("আপনি এই ম্যাচের অংশ নন!"); return;
     }
+    const { data: fx } = await db.from('fixtures').select('status').eq('id', fixtureId).single();
+    if (fx && fx.status !== 'Open') {
+        alert("এই ম্যাচের স্কোয়াড লক হয়ে গেছে!");
+        return;
+    }
 
     activeFixtureId = fixtureId;
     const { data: players } = await db.from('players').select('*').eq('team_id', loggedInCaptain.id);
@@ -194,11 +209,7 @@ async function openSquadModal(fixtureId, teamAId, teamBId) {
 
     const selectors = document.querySelectorAll('.squad-select');
     selectors.forEach((s, index) => {
-            const { data: fx } = await db.from('fixtures').select('status').eq('id', fixtureId).single();
-    if (fx && fx.status !== 'Open') {
-        alert("এই ম্যাচের স্কোয়াড লক হয়ে গেছে!");
-        return;
-    }
+            
         
         s.innerHTML = allPlayerList.map(p => `<option value="${p}">${p}</option>`).join('');
         if (allPlayerList[index]) s.selectedIndex = index;
