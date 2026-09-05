@@ -302,6 +302,11 @@ async function openResultModal(fixtureId) {
         alert("এই ম্যাচের ১v১ ভার্সেস এখনো জেনারেট হয়নি! অ্যাডমিন থেকে স্কোয়াড এপ্রুভ করান।");
         return;
     }
+        if (fixture && loggedInCaptain.id != fixture.team_a_id && loggedInCaptain.id != fixture.team_b_id) {
+        alert("আপনি এই ম্যাচের অংশ নন! শুধুমাত্র অংশগ্রহণকারী দুই দলের ক্যাপ্টেন রেজাল্ট সাবমিট করতে পারবেন।");
+        return;
+        }
+    
 
     const { data: teamA } = await db.from('teams').select('*').eq('id', fixture.team_a_id).single();
     const { data: teamB } = await db.from('teams').select('*').eq('id', fixture.team_b_id).single();
@@ -311,10 +316,7 @@ async function openResultModal(fixtureId) {
     const isTeamA = capId && fixture.team_a_id && (String(capId) === String(fixture.team_a_id));
     const isTeamB = capId && fixture.team_b_id && (String(capId) === String(fixture.team_b_id));
 
-    if (!isTeamA && !isTeamB) {
-        alert("আপনি এই ম্যাচের অংশ নন! শুধুমাত্র অংশগ্রহণকারী দুই দলের ক্যাপ্টেন রেজাল্ট সাবমিট করতে পারবেন।");
-        return;
-    }
+    
     
     
     activeFixtureId = fixtureId;
