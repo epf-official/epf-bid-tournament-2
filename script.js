@@ -532,6 +532,17 @@ async function loadAdminPendingData() {
     }
 }
 
+// RANDOM SHUFFLE FUNCTION
+function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex != 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+}
+
 // ADMIN ACTIONS
 async function approveSquadAndGenerate1v1(fixtureId) {
     try {
@@ -542,8 +553,12 @@ async function approveSquadAndGenerate1v1(fixtureId) {
             return;
         }
 
-        const squadA = squads[0].player_list.split(',').map(p => p.trim());
-        const squadB = squads[1].player_list.split(',').map(p => p.trim());
+        let squadA = squads[0].player_list.split(',').map(p => p.trim());
+        let squadB = squads[1].player_list.split(',').map(p => p.trim());
+
+        // র্যান্ডম শাফেল (Fisher-Yates)
+        squadA = shuffle(squadA);
+        squadB = shuffle(squadB);
 
         let matchPairs = [];
         for (let i = 0; i < 5; i++) {
@@ -561,7 +576,7 @@ async function approveSquadAndGenerate1v1(fixtureId) {
 
         await db.from('squad_submissions').update({ status: 'Approved' }).eq('fixture_id', fixtureId);
 
-        alert("১v১ ম্যাচ সফলভাবে জেনারেট ও এপ্রুভ হয়েছে!");
+        alert("১v১ ম্যাচ র্যান্ডমলি জেনারেট ও এপ্রুভ হয়েছে!");
         closeModals();
         init();
     } catch (err) {
