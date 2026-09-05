@@ -305,7 +305,16 @@ async function openResultModal(fixtureId) {
 
     const { data: teamA } = await db.from('teams').select('*').eq('id', fixture.team_a_id).single();
     const { data: teamB } = await db.from('teams').select('*').eq('id', fixture.team_b_id).single();
+    // --- ক্যাপ্টেন ভ্যালিডেশন চেক (৩০৮ নম্বর লাইন) ---
+    const captainTeam = loggedInCaptain.team_id || loggedInCaptain.id || loggedInCaptain.team_name;
+    const isTeamA = (fixture.team_a_id === captainTeam || fixture.team_a === captainTeam || teamA?.id === captainTeam || teamA?.team_name === loggedInCaptain.team_name);
+    const isTeamB = (fixture.team_b_id === captainTeam || fixture.team_b === captainTeam || teamB?.id === captainTeam || teamB?.team_name === loggedInCaptain.team_name);
 
+    if (!isTeamA && !isTeamB) {
+        alert("আপনি এই ম্যাচের অংশ নন! শুধুমাত্র অংশগ্রহণকারী দুই দলের ক্যাপ্টেন রেজাল্ট সাবমিট করতে পারবেন।");
+        return;
+    }
+    
     activeFixtureId = fixtureId;
 
     const { data: playersA } = await db.from('players').select('player_name').eq('team_id', fixture.team_a_id);
